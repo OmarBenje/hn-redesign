@@ -61,8 +61,13 @@ function simuleTogg(document, compteur) {
   }
 }
 
-export function charge(fichier = 'item.html', url = 'https://news.ycombinator.com/item?id=49426564') {
-  const html = readFileSync(new URL('../design-refs/fixtures/' + fichier, import.meta.url), 'utf8');
+/* Le hook de transformation. Les fixtures ne sont pas versionnees — ce sont
+   les ecrits d'autres personnes — donc on ne peut pas en ajouter une variante
+   « connectee » au depot. On transforme le HTML brut a la volee : c'est la
+   seule difference entre la page qu'un visiteur voit et celle qu'Omar voit,
+   et la sidebar en depend entierement. */
+export function charge(fichier = 'item.html', url = 'https://news.ycombinator.com/item?id=49426564', transforme = h => h) {
+  const html = transforme(readFileSync(new URL('../design-refs/fixtures/' + fichier, import.meta.url), 'utf8'));
   const { document, window } = parseHTML(html);
 
   const compteur = { clics: 0 };
