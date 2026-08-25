@@ -260,3 +260,11 @@ Inchangé, et redit : le focus, `scrollIntoView`, la navigation `j`/`k` réelle,
 - L'avatar photographique. HN n'en sert pas.
 - `/reply` et `/submit` en thème sombre. Elles n'ont pas de `#hnmain` — c'est exactement ce qui protège les formulaires. Contrainte structurelle, déjà actée en phase 4.
 - Toute pagination, tout défilement infini, toute mise en cache.
+
+## 10. Addenda (2026-08-25, revue finale de branche)
+
+Ce document reste l'autorité liante. Les deux points ci-dessous ne sont **pas** corrigés dans le corps du texte ci-dessus : un spec qui change silencieusement pour coller au code cesse d'être un spec. Ce qui suit consigne l'écart et sa raison.
+
+**Sur le critère 4 et le § 4.3 — « 7 posts entiers ».** Le design livré tient **6** cartes entières dans 1400 × 900, pas 7, et le calcul est sain : en-tête 92 px + barre d'onglets 68 px + interstice 18 px = 178 px avant la première carte ; 110 px par carte (102 px de carte + 8 px d'interstice) ; `floor((900 − 178) / 110) = 6`. Chaque composant — en-tête, onglets, carte — est conforme à sa propre spec, déjà revue et livrée dans une tâche antérieure. C'est la **somme** des trois qui n'avait jamais été vérifiée : le chiffre de 7 dans ce document venait d'une arithmétique faite en écrivant le plan, sans compter le chrome au-dessus de la première carte. `DESIGN.md` et `ROADMAP.md` enregistrent déjà 6 ; `test/rendu.sh` vérifie `6 cartes entieres dans 900px`, avec le calcul en commentaire à côté de l'assertion.
+
+**Sur le § 4.3 — `--radius-lg` pour la carte.** Ce token n'existe pas. Le § 5.4 du même document déclare exactement trois rayons — `--radius-sm`, `--radius-md`, `--radius-full` — et assigne `--radius-md` à la carte, aux onglets, à la recherche et au logo. Le code suit le § 5.4, qui fait autorité sur ce point ; le § 4.3 se contredisait lui-même en citant un quatrième rayon jamais déclaré.

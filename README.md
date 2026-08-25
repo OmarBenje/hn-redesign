@@ -43,7 +43,7 @@ Vérifié : chargement, rechargement après modification externe, et survie à u
 | `Cmd`+`Entrée` | envoyer la réponse depuis la zone de texte |
 | `Cmd`+`I` | mettre la sélection en italique |
 
-Le thème se change par un lien dans la sidebar (groupe secondaire) : **auto → clair → sombre**. `auto` suit les réglages du système. Le choix est retenu d'une visite à l'autre.
+Le thème se change par un lien dans la sidebar, en pied de colonne (`margin-top: auto`) — ni dans le groupe principal ni dans le groupe secondaire, mais frère des deux : **auto → clair → sombre**. `auto` suit les réglages du système. Le choix est retenu d'une visite à l'autre.
 
 Aucune touche n'est interceptée tant qu'un `input`, un `textarea` ou un élément `contenteditable` a le focus.
 
