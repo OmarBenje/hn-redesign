@@ -683,6 +683,12 @@ function poseTheme(nom) {
 function sidebar() {
   if (!document.querySelector('#hnmain')) return;
 
+  /* Le second garde-fou. #hnmain existe AUSSI sur /item : le premier ne
+     suffit donc pas a en tenir la sidebar a l'ecart. Le discriminant est
+     table.fatitem — 1 sur /item, 0 sur /news. Le fil est le coeur du
+     projet et ne cede pas 220px de largeur. */
+  if (document.querySelector('#hnmain table.fatitem')) return;
+
   /* Un vrai navigateur insere <tbody> implicitement pendant le parsing de
      <table> ; linkedom, qui fait tourner ce fichier sous test/harness.mjs,
      ne le fait pas. Les deux chemins visent le meme noeud selon le moteur. */

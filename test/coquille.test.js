@@ -98,17 +98,20 @@ test('les six liens secondaires sont deplaces, pas clones', () => {
       `${href} existe une seule fois — deplace, pas clone`);
 });
 
-test('la sidebar est absente d une page sans #hnmain (/login)', () => {
-  /* DEVIATION du brief : le test original chargeait charge() par defaut,
-     c'est a dire item.html sous le nom "/item". Mais #hnmain existe SUR
-     /item (CLAUDE.md piege n.5 ; entete() en tache 4 tourne d ailleurs sans
-     garde sur /item, donc la coquille s'y installe aussi, deliberement).
-     Ce test verifiait donc une condition fausse par accident, faute de
-     l'avoir vue passer au vert pour la mauvaise raison. Ce qui doit etre
-     protege ici, et ce que le brief decrit dans « le seul truc qui ne doit
-     pas casser », c'est le garde-fou de sidebar() sur les pages SANS
-     #hnmain — /login, /submit, /reply. login.html est la seule fixture du
-     depot qui en manque (verifie : zero occurrence de "hnmain"). */
+test('la sidebar est absente de /item', () => {
+  /* #hnmain existe AUSSI sur /item : le premier garde-fou de sidebar() ne
+     suffit pas a lui seul. L'assertion sur fatitem prouve que ce test
+     exerce bien le second garde-fou (table.fatitem), pas une condition
+     sans rapport — c'etait la faiblesse de la version precedente. */
+  const { document } = charge();
+  assert.equal(document.querySelector('nav.__side'), null);
+  assert.ok(document.querySelector('table.fatitem'), 'la fixture item porte bien une fatitem');
+});
+
+test('aucune sidebar sur une page sans #hnmain — /login reste intacte', () => {
+  /* Le PREMIER garde-fou de sidebar(), distinct de celui de /item : aucun
+     #hnmain du tout. login.html est la seule fixture du depot qui en
+     manque (verifie : zero occurrence de "hnmain"). */
   const { document } = charge('login.html', 'https://news.ycombinator.com/login');
   assert.equal(document.querySelector('#hnmain'), null, 'la fixture n a pas de #hnmain');
   assert.equal(document.querySelector('nav.__side'), null);
