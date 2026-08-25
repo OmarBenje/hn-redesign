@@ -638,9 +638,10 @@ function sidebar() {
   side.appendChild(lienTheme);
   undo.push(() => { lienTheme = null; });
 
+  /* Le decalage de la colonne vit dans la feuille, pas en style inline : une
+     regle sous .${ROOT} disparait avec la classe racine, donc revert() n'a
+     rien a defaire. Un setStyle ici ferait le meme travail deux fois. */
   insere(document.body, side, document.body.firstChild);
-  const centre = document.querySelector('body > center');
-  if (centre) setStyle(centre, 'marginLeft', '220px');
 
   /* Les separateurs « | » de .pagetop sont des noeuds texte litteraux : aucune
      regle CSS ne les atteint, il faut les retirer du DOM. */
@@ -674,9 +675,9 @@ Remplacer toute la section `/* --- navbar T24 */` du CSS (lignes ~239-288, jusqu
 .${ROOT} center { margin-left: 220px; }
 
 .${ROOT} .__side .__logo {
-  display: block; width: 36px; height: 36px; margin: 0 8px 20px;
-  background: var(--accent); border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; margin: 0 8px 20px;
+  background: var(--accent); border-radius: var(--radius-md);
 }
 .${ROOT} .__side .__logo img { width: 22px; height: 22px; }
 
