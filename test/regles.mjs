@@ -65,7 +65,7 @@ ok(clair.length === 16, `16 tokens en clair (trouve ${clair.length})`);
 ok(media.length === forced.length && media.every((t, i) => t === forced[i]),
    `la media query et .hn-dark redefinissent exactement les memes ${media.length} tokens`);
 const jamaisRedefinis = clair.filter(t => !media.includes(t));
-ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius', '--rail-active'].includes(t)),
+ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius', '--accent'].includes(t)),
    `seuls les tokens sans variante de theme ne sont pas redefinis (${jamaisRedefinis.join(' ')})`);
 
 /* 4. budget de coherence — T25 */
@@ -79,6 +79,28 @@ const horsScope = regles.filter(r => !r.sel.includes('#hnmain') && !r.sel.starts
 ok(horsScope.length === 0, `aucune regle hors de .hn-redesign (${horsScope.map(r => r.sel).join(', ') || 'ok'})`);
 const horsHnmain = regles.filter(r => !r.sel.includes('#hnmain') && !/^\.hn-redesign(\.[\w-]+)?(:not\([^)]*\))? \{?$|^\.hn-redesign(\.[\w-]+)?$/.test(r.sel.trim()));
 ok(horsHnmain.every(r => /body/.test(r.sel)), `hors #hnmain, seul le fond de page (${horsHnmain.map(r => r.sel).join(', ') || 'aucun'})`);
+
+/* 6. la ligne fusionnee et la navbar — T23 / T24 */
+const aRegle = re => regles.some(r => re.test(r.sel));
+ok(aRegle(/tr\.__row \+ tr$/) && /tr\.__row \+ tr\s*\{[^}]*display:\s*none/.test(css),
+   'la ligne de metadonnee native est masquee, pas supprimee');
+ok(/tr\.__row\s*\{[^}]*position:\s*relative/.test(css),
+   'la ligne fusionnee est le repere de positionnement de hide');
+ok(/\.__hide\s*\{[^}]*position:\s*absolute[^}]*opacity:\s*0/.test(css),
+   'hide est hors flux ET opacity 0 — ni display:none ni visibility, qui tuent le Tab');
+ok(/@media \(any-hover: hover\)/.test(css),
+   'la revelation au survol est enveloppee dans @media (any-hover: hover)');
+ok(/tr\.__row:focus-within .__hide/.test(css),
+   'hide est aussi revele au focus clavier, pas seulement au survol');
+const navbar = regles.filter(r => /tr:first-child > td/.test(r.sel));
+ok(navbar.length > 0 && navbar.every(r => /#hnmain > tbody > tr:first-child > td/.test(r.sel)),
+   `la navbar passe par le chemin complet, jamais par td:first-child (${navbar.length} regles)`);
+ok(/tr:first-child > td \{[^}]*box-sizing:\s*border-box/.test(css),
+   'box-sizing: border-box sur la barre — sans lui 46px de contenu rendent 51px');
+/* le palier de tracking : une seule valeur negative dans toute la feuille */
+const negatifs = [...css.matchAll(/letter-spacing:\s*(-[^;]+);/g)].map(x => x[1].trim());
+ok(new Set(negatifs).size <= 1 && (negatifs[0] === undefined || negatifs[0] === '-0.012em'),
+   `une seule valeur de tracking negatif dans la feuille (${[...new Set(negatifs)].join(', ') || 'aucune'})`);
 
 console.log(echecs.length ? `\n${echecs.length} ECHEC(S)\n` : '\nTout tient.\n');
 process.exit(echecs.length ? 1 : 0);

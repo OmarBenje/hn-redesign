@@ -87,17 +87,38 @@ Les deux sont écrits dans `CLAUDE.md`, pièges 4 et 5.
 
 ---
 
-## Phase 3 — la liste
+## Phase 3 — la liste ✅ **faite le 2026-08-25**
 
 L'écran où l'on décide quoi lire.
 
-| | Tâche | Effort | Source |
-|---|---|---|---|
-| **T23** | Ligne fusionnée à 32 px : titre et métadonnée sur une ligne, `hide` restauré au survol | ~1 h 30 | Issue #1 § B — **nouveau** |
-| **T24** | Navbar filet orange : 50 px, `box-sizing: border-box`, séparateurs `\|` retirés | ~45 min | Issue #1 § C — **nouveau** |
-| **T11** | Favicon de domaine depuis `span.sitestr` | ~20 min | ⚠️ **absorbée par T23**, qui l'inclut avec son repli obligatoire |
+| | Tâche | État |
+|---|---|---|
+| **T23** | Ligne fusionnée à 32 px : titre et métadonnée sur une ligne, `hide` restauré au survol | ✅ **32 px pour les 30 lignes**, 30 posts entiers, dernier à 1376 px sur 1500 |
+| **T24** | Navbar filet orange : 50 px, `box-sizing: border-box`, séparateurs `\|` retirés | ✅ 50 px, filet 3 px, 9 liens, 0 séparateur |
+| **T11** | Favicon de domaine depuis `span.sitestr` | ✅ absorbée par T23, avec le repli `visibility:hidden` |
 
-Repères mesurés : HN natif 30 posts par écran à 30 px de ligne. Le design initial était à 58 px et 24 posts. T23 vise **32 px et 30 posts**.
+Repères : HN natif 30 posts par écran à 30 px de ligne, mais en Verdana 10 px. Le design initial était à 58 px et 24 posts. **La cible de 30 posts est atteinte en typographie lisible.**
+
+La pondération par score (§ La liste de `DESIGN.md`, mécanisme 1) est livrée avec : titres de **15,5 à 19 px**, exposant 0,45, et le palier de tracking appliqué post par post — 0 violation sur 30.
+
+### Trois bugs que seul le rendu a trouvés
+
+| Symptôme | Cause |
+|---|---|
+| La ligne mesurait 34 px et non 32, alors que 20 + 2 × 6 = 32 | Alignés sur la ligne de base, le titre à 16,5 px et le strut de la `.titleline` à 13,3 px ne partagent pas la même ; le descendant du strut ajoutait 2 px. `vertical-align: middle` sur **tous** les enfants recentre sur le strut → 20 px exactement. |
+| Un post sur trente restait non fusionné, à 17 px, sa ligne de métadonnée visible | Les **posts d'emploi n'ont pas de `span.subline`** : leur `td.subtext` porte l'âge et `hide` en enfants directs. Repli sur `td.subtext`. |
+| Le même post affichait « 12 hours ago  12 hours ago » | Le lien de commentaires est le *dernier* `a[href^="item?id="]` — mais sur un post d'emploi le seul qui existe est celui de l'âge. Test `!dernier.closest('.age')`. |
+
+### T3 a dû être rebâti
+
+La phase 3 est la première à toucher le **DOM**, pas seulement la feuille. L'échec fermé ne pouvait plus reposer sur le seul retrait de la classe racine : elle n'annule ni un nœud inséré, ni un `style` inline, ni un nœud texte retiré.
+
+Chaque mutation s'enregistre maintenant dans une pile d'annulation et se rejoue à l'envers. **C'est vérifiable, et c'est vérifié** : `test/rendu.sh` compare l'`innerHTML` de `#hnmain` avant `apply()` et après `revert()` — **34 145 caractères identiques, à l'octet**.
+
+Un détail a coûté la première version : sauvegarder `el.style[prop]` et le restaurer rend bien la même *valeur*, mais le CSSOM la re-sérialise — `border:1px white solid` revient en `border: 1px solid white;`. C'est l'attribut `style` **brut** qu'il faut garder.
+
+| Effort réel | ~1 h 30 |
+|---|---|
 
 ---
 
@@ -161,7 +182,7 @@ Ils ne couvrent **pas** : le focus, `scrollIntoView`, la navigation `J`/`K`, le 
 Phase 0   porte                     ~10 min
 Phase 1   alignement du système     ~1 h
 Phase 2   fondations                ~2 h 10
-Phase 3   la liste                  ~2 h 15
+Phase 3   la liste                  ~2 h 15  fait
 Phase 4   le fil                    ~5 h 10
 Phase 5   vérification              ~3 h 10
 ─────────────────────────────────────────────

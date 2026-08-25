@@ -4,7 +4,7 @@ Un userscript qui redessine Hacker News dans Safari sur macOS. Exécuté par [Us
 
 **La roadmap fait autorite : [`ROADMAP.md`](ROADMAP.md).** 25 taches en 6 phases, revues eng et design passees, verdict CLEARED. En cas de contradiction avec un autre document, ROADMAP.md gagne.
 
-**T1 est une porte.** Tout le plan suppose que le runtime Userscripts charge un fichier local, le recharge apres modification, et survit a un redemarrage de Safari. Personne ne l'a execute. Rien ne commence avant.
+**T1 est une porte, et elle bloque moins qu'il n'y parait.** Le plan suppose que Userscripts charge un fichier local, le recharge apres modification, et survit a un redemarrage de Safari. **Personne ne l'a execute.** Mais T1 tranche le *runtime*, pas les artefacts : le CSS et le JS s'ecrivent et se verifient dans Chromium headless contre les fixtures. **T1 garde l'iteration dans Safari, pas l'ecriture.** Si Userscripts echoue, on perd le mode de distribution, pas le code.
 
 ## Design System
 
@@ -13,7 +13,7 @@ Les polices, couleurs, espacements et la direction esthétique y sont définis, 
 Ne pas en dévier sans accord explicite d'Omar.
 En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
-## Les cinq choses qui cassent ce projet si on les oublie
+## Les sept choses qui cassent ce projet si on les oublie
 
 1. **Les deux signaux de couleur de HN.** (a) La rampe de downvote sur les commentaires : `.commtext.c00` → `.cDD`. Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. (b) `a:visited { color:#828282 }` sur la liste : HN grise les titres déjà lus, et `#hnmain a { color: ... }` l'écrase. Les deux se cassent de la même façon — une règle de couleur trop large. Voir `DESIGN.md` § Color.
 
@@ -24,6 +24,10 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 4. **Styler le conteneur ne suffit pas — `news.css` déclare `font-family` sur neuf sélecteurs à l'intérieur de `#hnmain`** : `body`, `td`, `.default`, `.admin`, `.title`, `.subtext td`, `.comhead`, `.comment`, `input`. Une **déclaration directe bat toujours une valeur héritée**, quelle que soit la spécificité. Symptôme observé : le `td` était bien en SF et `.commtext` restait en Verdana, parce que `.comment` (news.css:21) le déclarait au-dessus. D'où le sélecteur universel `#hnmain *:not(input):not(textarea):not(select)` — les contrôles de formulaire sont exclus, HN met la zone de réponse en monospace délibérément.
 
 5. **`.athing.submission` existe sur les deux pages ; `.fatitem` n'existe que sur `/item`.** Sur `/news`, les 30 lignes sont des `tr.athing.submission`. Un sélecteur de titre de post qui passe par `.athing.submission` frappe donc les 30 titres de la liste — vérifié : ils passaient tous à 21 px. Le discriminant est `table.fatitem` (1 sur `/item`, 0 sur `/news`).
+
+6. **Les posts d'emploi n'ont pas de `span.subline`.** Leur `td.subtext` porte l'âge et `hide` en enfants directs. Tout code qui lit `.subline` doit se replier sur `td.subtext`, sinon un post sur trente reste non traité — visible immédiatement : il garde sa hauteur native et sa ligne de métadonnée. Corollaire : sur ces posts, le seul `a[href^="item?id="]` est celui de **l'âge**, pas un lien de commentaires. Le prendre pour tel affiche l'âge deux fois.
+
+7. **Toute mutation du DOM doit s'enregistrer dans la pile d'annulation.** Depuis la phase 3, le script insère des nœuds, pose des classes, écrit des `style` inline et retire des nœuds texte. Retirer la classe racine n'annule rien de tout ça. Passer par `addClass` / `setStyle` / `insere` / `detache` n'est pas une commodité : c'est ce qui fait tenir l'échec fermé. Et `setStyle` sauvegarde l'**attribut `style` brut**, pas la propriété — le CSSOM re-sérialise, et la comparaison de réversibilité échoue sur des espaces.
 
 ## Contraintes de la machine
 
@@ -36,9 +40,11 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 ROADMAP.md             les 25 taches, en 6 phases — source de verite du reste a faire
 DESIGN.md              le systeme de design — source de verite visuelle
 CLAUDE.md              ce fichier
-hn-redesign.user.js    le script — phase 2 faite : tokens, rampe, typographie, echec ferme
+hn-redesign.user.js    le script — phases 2 et 3 : tokens, rampe, typographie, ligne fusionnee, navbar
 t1-spike.user.js       jetable, a supprimer une fois T1 repondu
 test/contraste.mjs     verifie les 9 couleurs, la regularite L* et la bascule de teinte
+test/regles.mjs        21 invariants de la feuille — specificite, rampe, tokens, budget T25
+test/rendu.sh          30 assertions au rendu, dont la reversibilite du DOM a l'octet
 design-refs/           captures de reference + capture.sh
 test/                  node --test + linkedom (a creer, T10)
 ```
@@ -50,6 +56,8 @@ test/                  node --test + linkedom (a creer, T10)
 ## Tests
 
 `node test/contraste.mjs` — les 9 couleurs contre leur fond dans les deux themes, la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
+
+`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 30 assertions. Prerequis : `./design-refs/capture.sh ./design-refs/fixtures`. Moteur : Chromium headless via `browse`. **Ce n'est pas Safari.**
 
 `node test/regles.mjs` — les invariants que le rendu **ne peut pas** verifier. Le cas qui justifie ce fichier : `a:visited`. Aucun navigateur ne dit la verite sur une regle `:visited` via `getComputedStyle` — ils mentent tous, deliberement, contre le history sniffing. On ne peut donc pas tester au rendu que les titres deja lus restent gris ; on prouve que la regle existe et qu'elle **gagne en specificite**. Le fichier verifie aussi la parite des tokens entre les trois blocs de theme et le budget de coherence de T25.
 

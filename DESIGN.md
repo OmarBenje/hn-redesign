@@ -91,7 +91,7 @@ Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est 
 | Métadonnée | `#6E6B64` (5,09:1) | `#8A867C` (4,84:1) |
 | Auteur | `#4A4741` (8,86:1) | `#B0ABA0` (7,68:1) |
 | Rail de profondeur | `#E4E0D4` | `#2E2C28` |
-| Rail de branche active | `#FF6600` | `#FF6600` |
+| **Accent en aplat** (`--accent`) — filet de navbar, rail de branche active, marqueur du commentaire actif | `#FF6600` | `#FF6600` |
 | **Accent texte** | **`#BF4300`** (5,00:1) | `#FF6600` (5,98:1) |
 | **Lien visité** | **`#8D9195`** | `#636669` |
 | **Anneau de focus** | **`#BF4300`** (5,00:1) | `#FF6600` (5,98:1) |
@@ -105,6 +105,8 @@ Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est 
 - Texte, en thème clair → `#BF4300`.
 - Texte, en thème sombre → `#FF6600` tel quel, il tient à 5,98:1.
 - Anneau de focus → accent texte, jamais orange pur. Voir § `:focus-visible`.
+
+Mesuré le 2026-08-25 sur la navbar livrée : le filet `#FF6600` donne **2,81:1** contre le fond de colonne clair et **5,98:1** contre le sombre. Le plancher de 3:1 de ce système porte sur le **texte de contenu** — le filet n'en est pas, il n'énonce rien qu'il faille lire. Le chiffre est consigné ici pour qu'il ne se redécouvre pas comme un bug.
 
 **L'orange cesse d'être une barre pleine.** Le bandeau natif de 50 px devient un **filet de 3 px** plus le carré du logo (T24, spec dans l'issue #1 § C). L'ancre visuelle subsiste — on reconnaît HN immédiatement — sans que 50 px d'orange saturé se disputent l'attention avec le premier titre de la liste. C'est le seul endroit du système où l'orange occupe une surface, et il en occupe désormais 3 px.
 
@@ -188,7 +190,44 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 
 **3. Hiérarchie de la ligne de métadonnées.** Le nombre de commentaires est **la seule chose colorée** de la ligne (`--accent-text`) : c'est là qu'on clique. Le score est en `--c2` et en gras, en chiffres tabulaires. `hide`, `past`, `favorite` restent en gris méta. L'âge reste en gris méta.
 
-**Densité mesurée au DOM : 24 posts entamés** sur un viewport 1400 × 1500, hauteur de ligne 58 px (HN natif : 30, mais en Verdana 10 px). La ligne fusionnée de T23 ramène la hauteur de ligne à 32 px et la densité à 30 posts — mesuré sur prototype, pas encore implémenté.
+**Densité livrée le 2026-08-25 : 30 posts entiers, hauteur de ligne 32 px pour les 30 lignes**, viewport 1400 × 1500, dernier post à 1376 px. Mesuré au `getBoundingClientRect`. HN natif est à 30 px de ligne pour 30 posts, mais en Verdana 10 px : le redesign atteint la densité native en typographie lisible. La valeur antérieure de 58 px et 24 posts est superseded.
+
+### La ligne fusionnée — structure livrée
+
+`[favicon 14] [titre 15,5–19 px] [(domaine)] [score · âge · N comments]`, le tout sur **une** ligne de 32 px. La seconde `<tr>` passe en `display: none` ; ses nœuds utiles sont **clonés**, jamais déplacés — les scripts de HN les référencent encore. Les clones perdent leur `id` : deux `#score_<n>` dans le même document et `getElementById` renvoie le clone.
+
+Deux choses cessent d'être visibles, et restent dans le DOM :
+
+- `hide` — **restauré au survol et au focus**. `position: absolute` plus `opacity: 0` : les trois techniques de masquage ont été mesurées, `display:none` et `visibility:hidden` tuent le `Tab`, `opacity:0` seul garde la place. Il faut les deux. La révélation au survol est enveloppée dans `@media (any-hover: hover)`.
+- **Le nom de l'auteur** — abandon assumé. Commodité, pas fonction.
+
+> [!warning] Le titre à 32 px ne tenait pas sans un troisième réglage
+> Le calcul disait 20 px de ligne plus 2 × 6 px de padding = 32. Le rendu donnait **34**. Alignés sur la ligne de base, le titre à 16,5 px et le strut de la `.titleline` à 13,3 px ne partagent pas la même, et le descendant du strut ajoutait 2 px. `vertical-align: middle` sur **tous** les enfants de `.titleline` — pas seulement le favicon — recentre tout sur le strut et la boîte retombe à 20 px exactement, pour les 30 lignes.
+
+## Navbar
+
+**Le bandeau de 50 px cesse d'être un aplat orange ; il devient un filet de 3 px.** L'ancre visuelle subsiste — on reconnaît HN au premier coup d'œil — sans que 50 px d'orange saturé se disputent l'attention avec le premier titre de la liste.
+
+| | Valeur |
+|---|---|
+| Hauteur totale | **50 px**, `box-sizing: border-box` |
+| Filet supérieur | 3 px `--accent` |
+| Filet inférieur | 1 px `--rail` |
+| Fond | `--col` — la barre est la colonne |
+| Logo `y18.svg` | 20 px, `--radius` |
+| `Hacker News` | 14 px, 600, `--c00` |
+| Liens de navigation | 13 px, `--meta`, `gap: 20px` en flex |
+| Page active | `--accent-text` |
+| Séparateurs `\|` | retirés — ce sont des nœuds texte, aucune règle CSS ne les atteint |
+
+**Le sélecteur est un chemin complet, et ce n'est pas du zèle.** La barre est un `<td bgcolor="#ff6600">` qui contient une **table imbriquée** de trois cellules. Viser `td:first-child` depuis `#hnmain` touche la barre *et* ses cellules : c'est l'erreur qui colle le logo à gauche et fait flotter la navigation au centre. D'où `#hnmain > tbody > tr:first-child > td`.
+
+**`box-sizing: border-box` n'est pas optionnel.** En `content-box`, 46 px de contenu plus 4 px de bordures rendent 51 px, et le critère de hauteur échoue sur une barre pourtant juste.
+
+**La page active n'est jamais marquée sur `/news`.** Il n'y existe aucun item de navigation à marquer, et pointer `a[href="news"]` reviendrait à souligner le nom du site. `newest`, `ask`, `show`, `jobs` sont marqués depuis l'attribut `op` de `<html>`.
+
+> [!info] Le `letter-spacing: -.002em` de l'issue #1 § C n'a pas été implémenté
+> Il est antérieur à l'amendement A1, qui interdit tout crénage négatif sous 17 px. La navbar est à 13 px : `letter-spacing: 0`. À cette taille la valeur valait −0,026 px de toute façon.
 
 ## Spacing
 
@@ -203,8 +242,13 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 | Indentation par niveau | **22 px** (HN natif : 40) |
 | Rail vertical | 1 px, à `indent − 11 px` |
 | Padding latéral de colonne | 48 px |
-| Entre deux posts de la liste | 15 px |
+| Entre deux posts de la liste | **12 px** |
 | Barre de position | 28 px de haut, filet supérieur 1 px |
+
+> [!warning] Contradiction interne, tranchée le 2026-08-25
+> Ce tableau annonçait **15 px** entre deux posts, alors que la ligne au-dessus déclare que l'échelle n'a que six crans — `4 · 8 · 12 · 16 · 24 · 48` — et que « rien d'autre n'existe ». 15 n'en fait pas partie. Tranché en faveur de la règle d'échelle, qui est la contrainte structurante : **12 px**. Conséquence mesurée : pas de dette de densité, les 30 posts tiennent à 1376 px sur 1500.
+>
+> La `tr.spacer` de HN porte `style="height:5px"` **en style inline** : aucune règle de la feuille ne la bat. C'est le JS qui la change, via le même mécanisme réversible que le reste.
 
 Le **16 px entre frères contre 12 px entre parent et enfant** est le seul geste hiérarchique du système, et il suffit : descendre coûte moins d'espace que passer au suivant, donc la subordination se lit avant même que l'œil ait vu le rail.
 
@@ -279,11 +323,14 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Espace entre posts : 15 → 12 px** | Contradiction interne du fichier : 15 n'est pas un cran de l'échelle que la même section déclare exhaustive. La règle d'échelle l'emporte. |
+| 2026-08-25 | **`--rail-active` renommé `--accent`** | Le token portait déjà tout aplat orange du système — filet de navbar, rail actif, marqueur. Son nom n'en décrivait qu'un usage sur trois, et l'issue #1 § C écrivait déjà `var(--accent)`. Nombre de tokens inchangé : 16. |
+| 2026-08-25 | **Nom de l'auteur retiré de la liste** | Commodité, pas fonction. La ligne fusionnée n'a de place que pour ce sur quoi on décide de lire. |
 | 2026-08-25 | **La liste entre dans le périmètre** | Pondération par score, favicon avec repli, hiérarchie de la ligne méta, et préservation de `a:visited`. |
 
 ## Ce que ce fichier ne couvre pas
 
-- **La navbar en détail.** Le principe est ici (filet de 3 px, hauteur totale 50 px, accent en aplat) ; les sélecteurs, le marquage de la page active et le retrait des séparateurs `|` vivent dans l'issue #1 § C.
+- **Le pied de page.** Les séparateurs `|` de `Guidelines | FAQ | Lists…` et le filet orange natif du bas ne sont pas traités. T24 ne portait que sur la barre du haut.
 - **Mobile et iOS.** Hors périmètre par décision, pas par oubli.
 - **Les états de survol et les transitions.** Aucune animation dans ce projet.
 - **`/newest`, `/ask`, `/show`, `/jobs`, `/front`.** Même DOM supposé que `/news`, non vérifié.

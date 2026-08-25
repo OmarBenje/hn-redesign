@@ -14,8 +14,14 @@ curl -s -A "$UA" "https://news.ycombinator.com/" -o "$OUT/news.html"
 ID=$(grep -o 'class="athing submission" id="[0-9]*"' "$OUT/news.html" | head -1 | grep -o '[0-9]*')
 curl -s -A "$UA" "https://news.ycombinator.com/item?id=$ID" -o "$OUT/item.html"
 
-# 3. rendre les URL relatives resolvables hors ligne
-for f in "$OUT/news.html" "$OUT/item.html"; do
+# 3. /newest — la seule page ou la navbar marque un item actif (op=newest)
+curl -s -A "$UA" "https://news.ycombinator.com/newest" -o "$OUT/newest.html"
+
+# 4. /login — le temoin de non-regression : pas de #hnmain, donc hors d'atteinte
+curl -s -A "$UA" "https://news.ycombinator.com/login" -o "$OUT/login.html"
+
+# 5. rendre les URL relatives resolvables hors ligne
+for f in "$OUT/news.html" "$OUT/item.html" "$OUT/newest.html" "$OUT/login.html"; do
   perl -0pi -e 's|<head>|<head><base href="https://news.ycombinator.com/">|' "$f"
 done
 
@@ -25,6 +31,8 @@ echo "Fixtures ecrites dans $OUT :"
 echo "  news.html  $(grep -o 'class="athing submission"' "$OUT/news.html" | wc -l | tr -d ' ') posts"
 echo "  item.html  $(grep -o 'class="athing comtr' "$OUT/item.html" | wc -l | tr -d ' ') commentaires  (id $ID)"
 echo "             profondeur max $(grep -o 'indent="[0-9]*"' "$OUT/item.html" | grep -o '[0-9]*' | sort -n | tail -1)"
+echo "  newest.html $(grep -o 'class="athing submission"' "$OUT/newest.html" | wc -l | tr -d ' ') posts, op=$(grep -o "op=[\"']*[a-z]*" "$OUT/newest.html" | head -1)"
+echo "  login.html  $(grep -o '<input' "$OUT/login.html" | wc -l | tr -d ' ') input, hnmain $(grep -c 'id="hnmain"' "$OUT/login.html" || true)"
 echo "             rampe $(grep -o 'commtext c[0-9A-Za-z]*' "$OUT/item.html" | sort | uniq -c | tr -s ' ' | tr '\n' ' ')"
 echo
 echo "Les chiffres du DESIGN.md ont ete mesures le 2026-08-25 sur un fil de 206"
