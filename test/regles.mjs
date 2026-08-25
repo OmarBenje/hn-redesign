@@ -39,15 +39,29 @@ const regles = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
 
 console.log('\ninvariants de la feuille\n');
 
-/* 1. le lien visite doit battre la regle de lien generique */
-const visited = regles.find(r => r.sel.includes(':visited'));
-const lienGenerique = regles.find(r => /#hnmain a$/.test(r.sel.trim()));
-ok(!!visited, 'la regle a:visited existe');
-ok(!!lienGenerique, 'la regle de lien generique existe');
-if (visited && lienGenerique) {
-  const sv = Math.max(...visited.sel.split(',').map(spec));
-  const sg = Math.max(...lienGenerique.sel.split(',').map(spec));
-  ok(sv > sg, `a:visited (${sv}) bat le lien generique (${sg}) — les titres deja lus restent gris`);
+/* 1. tout concurrent d'un lien de titre doit etre battu par UN :visited.
+ *
+ * L'ancienne version de ce test ne comparait que la premiere regle
+ * :visited contre #hnmain a. Insuffisant : sur une carte, le vrai
+ * concurrent est tr.__card .titleline > a a (1,3,2), qui bat le
+ * :visited GENERIQUE a (1,3,1). Seule tr.__card .titleline > a:visited
+ * a (1,4,2) sauve le signal — et rien ne le verifiait. Ce test compare
+ * donc CHAQUE regle qui colore un lien de titre a TOUTE regle :visited
+ * de lien de titre : il suffit qu'UNE la batte, mais il en faut une pour
+ * chacune. */
+const couleur = r => /\bcolor\s*:/.test(r.body);
+const lienDeTitre = sel => /\.titleline > a$/.test(sel) || /#hnmain a$/.test(sel);
+const concurrents = regles.filter(r => couleur(r) && !r.sel.includes(':visited')
+  && r.sel.split(',').some(s => lienDeTitre(s.trim())));
+const visites = regles.filter(r => couleur(r) && r.sel.includes(':visited')
+  && r.sel.split(',').some(s => /\.titleline > a:visited$/.test(s.trim())));
+ok(concurrents.length > 0, `au moins une regle colore un lien de titre (${concurrents.length})`);
+ok(visites.length > 0, `au moins une regle :visited de lien de titre existe (${visites.length})`);
+const specVisiteMax = visites.length ? Math.max(...visites.flatMap(r => r.sel.split(',').map(spec))) : -1;
+for (const c of concurrents) {
+  const sc = Math.max(...c.sel.split(',').map(spec));
+  ok(sc < specVisiteMax,
+    `"${c.sel}" (${sc}) est battue par le :visited le plus specifique (${specVisiteMax}) — sinon ce titre deja lu redevient noir`);
 }
 
 /* 2. la rampe a bien cinq crans distincts, jamais une regle unique */
@@ -80,7 +94,11 @@ ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
    protection des formulaires cesse d'etre structurelle et devient une
    condition a verifier. Cette liste est la moitie du controle ; l'autre est
    le garde-fou en tete de sidebar(), teste dans test/coquille.test.js. */
-const HORS_HNMAIN_AUTORISE = /(^|,)\s*\.hn-redesign(\.[\w-]+)?\s+(body|center|\.__side\b)/;
+/* "center" seul n'est plus autorise : HN enveloppe aussi chaque fleche de
+ * vote dans un <center> (div.votearrow), et un bare center frappait les 31
+ * du document, pas seulement le wrapper de #hnmain. Seul body > center,
+ * le wrapper de page, passe desormais. */
+const HORS_HNMAIN_AUTORISE = /(^|,)\s*\.hn-redesign(\.[\w-]+)?\s+(body(\s*>\s*center)?|\.__side\b)/;
 const horsScope = regles.filter(r => !r.sel.includes('#hnmain') && !r.sel.startsWith('.hn-redesign'));
 ok(horsScope.length === 0, `aucune regle hors de .hn-redesign (${horsScope.map(r => r.sel).join(', ') || 'ok'})`);
 const horsHnmain = regles.filter(r => !r.sel.includes('#hnmain')

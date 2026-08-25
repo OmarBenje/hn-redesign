@@ -269,14 +269,27 @@ const CSS = `
 
    C'est le SEUL bloc de la feuille qui vit hors de #hnmain, avec le fond de
    page. test/regles.mjs le sait et le verifie nommement. */
+/* font-family est ici et pas seulement heritee : pitfall 4 du CLAUDE.md, un
+   cran plus loin. news.css declare font-family DIRECTEMENT sur body, et une
+   declaration directe bat toujours une valeur heritee quelle que soit la
+   specificite — c'est ce qui forcait deja #hnmain * a etre universel. La
+   sidebar est le premier composant du projet a vivre HORS de #hnmain, donc
+   le premier a heriter de ce body en Verdana au lieu du sien. Le prochain
+   composant place hors de #hnmain retombera dans le meme piege. */
 .${ROOT} .__side {
   position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
   box-sizing: border-box; padding: 20px 12px;
   display: flex; flex-direction: column; gap: 4px;
   background: var(--page); border-right: 1px solid var(--line);
-  font-size: 14px; line-height: 20px;
+  font-family: var(--ui); font-size: 14px; line-height: 20px;
 }
-.${ROOT}.hn-side center { margin-left: 220px; }
+/* body > center et non center tout court : HN enveloppe aussi chaque fleche
+   de vote dans un <center> (div.votearrow dans td.votelinks). Un selecteur
+   bare frappait les 31 <center> de la page, pas seulement le wrapper de
+   #hnmain — les 30 fleches de vote decalaient de 220px hors de leur cellule,
+   flottant sur le titre et le domaine. Trouve au rendu, invisible aux 115
+   assertions qui ne comparaient jamais une boite a une autre. */
+.${ROOT}.hn-side body > center { margin-left: 220px; }
 
 .${ROOT} .__side .__logo {
   display: flex; align-items: center; justify-content: center;
@@ -317,11 +330,18 @@ const CSS = `
 
    box-sizing: border-box n'est pas decoratif : en content-box, la hauteur de
    contenu plus les bordures rendent quelques pixels de trop et le critere de
-   hauteur echoue sur une barre pourtant juste. */
+   hauteur echoue sur une barre pourtant juste.
+
+   La gouttiere de 48px vit ICI, sur le td EXTERNE, pas sur les cellules de
+   la table interne : la table de navbar de HN porte style="padding:2px" et
+   ses td:nth-child(1)/(3) portent padding-right:4px en INLINE — l'inline
+   bat toujours la feuille, donc un padding pose sur ces cellules-la ne
+   s'appliquerait jamais. Poser le padding un niveau plus haut, ou HN n'a
+   rien ecrit en inline, l'evite completement. */
 .${ROOT} #hnmain > tbody > tr:first-child > td {
   background: var(--page);
   border: 0; box-sizing: border-box;
-  height: 92px; padding: 0;
+  height: 92px; padding: 0 48px;
 }
 .${ROOT} #hnmain > tbody > tr:first-child > td > table { width: 100%; }
 .${ROOT} #hnmain > tbody > tr:first-child > td > table td { vertical-align: middle; padding: 0; }
@@ -373,6 +393,12 @@ const CSS = `
   border-bottom: 2px solid transparent;
 }
 .${ROOT} #hnmain tr.__onglets a.__on { color: var(--accent-text); border-bottom-color: var(--accent); }
+
+/* La table de #bigbox qui porte les cartes est shrink-to-fit par defaut —
+   invisible avant que les lignes aient une bordure ou un fond, expose des
+   que la barre d'onglets au-dessus, elle, occupe toute la colonne. Sans ce
+   width:100%, les bords droits divergent de plus de 150px. */
+.${ROOT} #hnmain table.__liste { width: 100%; }
 
 /* ------------------------------------------------------ la coquille : la carte
    La tr EST la carte. Grille de deux colonnes : la gouttiere porte la pastille
@@ -1081,6 +1107,15 @@ function cartes() {
   const lignes = [...document.querySelectorAll('#hnmain tr.athing.submission')]
     .filter(tr => !tr.closest('table.fatitem'));
   if (!lignes.length) return;
+
+  /* La table interne de #bigbox est shrink-to-fit (largeur de contenu, pas
+     100%) : invisible tant que les lignes n'avaient ni bordure ni fond, mais
+     la barre d'onglets au-dessus, elle, occupe toute la colonne — 157px
+     d'ecart entre leurs bords droits une fois les cartes bordees. Poser une
+     classe dessus et forcer width:100% aligne les deux, et rend la largeur
+     de carte dependante de la mise en page plutot que du contenu. */
+  const table = lignes[0].closest('table');
+  if (table) addClass(table, '__liste');
 
   for (const tr of lignes) {
     const titleline = tr.querySelector('.titleline');

@@ -56,13 +56,39 @@ verdict "$(js '(()=>{
   const med=h[Math.floor(h.length/2)];
   const hors=h.filter(v=>Math.abs(v-100)>6).length;
   const t=r.map(x=>getComputedStyle(x.querySelector(".titleline a")).fontSize);
-  const rangs=r.map(x=>{const c=getComputedStyle(x.querySelector(".rank"));
-    return c.borderTopLeftRadius+" "+c.width});
+  const rangs=r.map(x=>{const rk=x.querySelector(".rank");const b=rk.getBoundingClientRect();const c=getComputedStyle(rk);
+    return c.borderTopLeftRadius+" "+Math.round(b.width)+"x"+Math.round(b.height)});
+  /* Avant : 30 pastilles CARREES identiques passaient cette assertion, son
+     nom promettait "ronde" mais ne verifiait que l egalite entre elles. Un
+     cercle exige largeur === hauteur ET un rayon >= la moitie du cote —
+     999px (le token --radius-full) le garantit, mais il fallait le dire. */
   return JSON.stringify({
     "30 cartes": [r.length===30, r.length+" cartes"],
     "hauteur 100px +/- 6": [hors===0, "mediane "+med.toFixed(1)+"px, "+hors+" hors tolerance"],
     "titre fixe a 17px": [new Set(t).size===1&&t[0]==="17px", [...new Set(t)].join(", ")],
-    "pastille de rang ronde": [rangs.every(v=>v===rangs[0]), rangs[0]]
+    "pastille de rang ronde, 26x26, rayon 999px": [
+      rangs.every(v=>v==="999px 26x26"), [...new Set(rangs)].join(", ")]
+  });})()')" || ECHECS=1
+
+echo
+echo "/news — la fleche de vote reste dans sa cellule (finding 1)"
+# HN enveloppe CHAQUE fleche dans un <center> — pas seulement le wrapper de
+# page. Un selecteur bare "center" decalait les 30 fleches de 220px hors de
+# td.votelinks, par-dessus le titre et le domaine. On compare une boite a
+# une autre, jamais a une constante : c est la regle que 115 assertions
+# vertes n avaient pas suivie.
+verdict "$(js '(()=>{
+  const cartes=[...document.querySelectorAll("#hnmain tr.__card")].filter(tr=>tr.querySelector("td.votelinks"));
+  const hors=cartes.filter(tr=>{
+    const td=tr.querySelector("td.votelinks");
+    const fleche=td.querySelector(".votearrow");
+    if (!fleche) return true;
+    const tb=td.getBoundingClientRect(), fb=fleche.getBoundingClientRect();
+    return !(fb.left>=tb.left-0.5 && fb.right<=tb.right+0.5);
+  });
+  return JSON.stringify({
+    "chaque fleche dans sa td.votelinks": [hors.length===0 && cartes.length>0,
+      cartes.length+" cartes avec fleche, "+hors.length+" hors de leur cellule"]
   });})()')" || ECHECS=1
 
 echo
@@ -102,6 +128,63 @@ verdict "$(js '(()=>{
     "en-tete present": [!!ent, ent?Math.round(ent.getBoundingClientRect().height)+"px":"absent"],
     "3 onglets, 1 actif": [tabs.length===3&&actifs.length===1, tabs.length+" onglets, "+actifs.length+" actif"],
     "recherche dans l en-tete": [!!(rech&&rech.closest(".__entete")), rech?"oui":"absente"]
+  });})()')" || ECHECS=1
+
+echo
+echo "/news — la gouttiere de 48px de l en-tete (finding 2)"
+# On compare des boites entre elles, jamais a une constante. La reference
+# est le tableau de cartes (donc la barre d onglets, alignee dessus par le
+# fix du finding 3) : le titre doit commencer ou la colonne commence, et le
+# dernier element de droite doit finir ou la colonne finit. Tolerance de
+# 6px : le tableau de navbar de HN porte lui-meme padding:2px et ses
+# cellules padding-right:4px, en INLINE — invisible a l arithmetique, connu
+# seulement en le rendant.
+verdict "$(js '(()=>{
+  const titre=document.querySelector(".__titre");
+  const liste=document.querySelector("#hnmain table.__liste");
+  const entete=document.querySelector(".__entete");
+  const cellules=entete?[...entete.querySelectorAll("table td")]:[];
+  const droite=cellules[cellules.length-1];
+  if (!titre||!liste||!droite) return JSON.stringify({"gouttiere mesurable":[false,"element(s) absent(s)"]});
+  const tb=titre.getBoundingClientRect(), lb=liste.getBoundingClientRect(), db=droite.getBoundingClientRect();
+  const ecartGauche=Math.abs(tb.left-lb.left), ecartDroite=Math.abs(db.right-lb.right);
+  return JSON.stringify({
+    "titre aligne sur le bord gauche de la colonne": [ecartGauche<=6,
+      "titre a "+Math.round(tb.left)+"px, colonne a "+Math.round(lb.left)+"px, ecart "+ecartGauche.toFixed(1)+"px"],
+    "la cellule de droite alignee sur le bord droit de la colonne": [ecartDroite<=6,
+      "droite a "+Math.round(db.right)+"px, colonne a "+Math.round(lb.right)+"px, ecart "+ecartDroite.toFixed(1)+"px"]
+  });})()')" || ECHECS=1
+
+echo
+echo "/news — la carte a la largeur de la barre d onglets (finding 3)"
+verdict "$(js '(()=>{
+  const liste=document.querySelector("#hnmain table.__liste");
+  const tabsDiv=document.querySelector(".__onglets > td > div");
+  if (!liste||!tabsDiv) return JSON.stringify({"comparaison possible":[false,"element(s) absent(s)"]});
+  const lb=liste.getBoundingClientRect(), tb=tabsDiv.getBoundingClientRect();
+  return JSON.stringify({
+    "bord gauche identique": [Math.abs(lb.left-tb.left)<=1, Math.round(lb.left)+"px contre "+Math.round(tb.left)+"px"],
+    "bord droit identique": [Math.abs(lb.right-tb.right)<=1, Math.round(lb.right)+"px contre "+Math.round(tb.right)+"px"]
+  });})()')" || ECHECS=1
+
+echo
+echo "/news — la sidebar herite du systeme, pas de Verdana (finding 4)"
+# Pitfall 4 du CLAUDE.md un cran plus loin : news.css declare font-family
+# DIRECTEMENT sur body, et une declaration directe bat toujours une valeur
+# heritee. La sidebar est le premier composant du projet hors de #hnmain ;
+# sans font-family explicite, elle herite du body natif en Verdana.
+verdict "$(js '(()=>{
+  const cible=sel=>{const el=document.querySelector(sel);return el?getComputedStyle(el).fontFamily:null};
+  const valeurs={
+    "nav.__side": cible("nav.__side"),
+    ".__nav-1 a": cible(".__side .__nav-1 a"),
+    ".__nav-2 a": cible(".__side .__nav-2 a"),
+    "a.__theme": cible(".__side a.__theme")
+  };
+  const mauvais=Object.entries(valeurs).filter(([,v])=>!v||v.startsWith("Verdana"));
+  return JSON.stringify({
+    "aucun element de la sidebar en Verdana": [mauvais.length===0,
+      mauvais.length===0?JSON.stringify(valeurs):JSON.stringify(mauvais)]
   });})()')" || ECHECS=1
 
 echo
