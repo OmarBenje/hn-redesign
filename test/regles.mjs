@@ -80,7 +80,7 @@ ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
    protection des formulaires cesse d'etre structurelle et devient une
    condition a verifier. Cette liste est la moitie du controle ; l'autre est
    le garde-fou en tete de sidebar(), teste dans test/coquille.test.js. */
-const HORS_HNMAIN_AUTORISE = /(^|,)\s*\.hn-redesign\s+(body|center|\.__side\b)/;
+const HORS_HNMAIN_AUTORISE = /(^|,)\s*\.hn-redesign(\.[\w-]+)?\s+(body|center|\.__side\b)/;
 const horsScope = regles.filter(r => !r.sel.includes('#hnmain') && !r.sel.startsWith('.hn-redesign'));
 ok(horsScope.length === 0, `aucune regle hors de .hn-redesign (${horsScope.map(r => r.sel).join(', ') || 'ok'})`);
 const horsHnmain = regles.filter(r => !r.sel.includes('#hnmain')

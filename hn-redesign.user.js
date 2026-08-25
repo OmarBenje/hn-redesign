@@ -276,7 +276,7 @@ const CSS = `
   background: var(--page); border-right: 1px solid var(--line);
   font-size: 14px; line-height: 20px;
 }
-.${ROOT} center { margin-left: 220px; }
+.${ROOT}.hn-side center { margin-left: 220px; }
 
 .${ROOT} .__side .__logo {
   display: flex; align-items: center; justify-content: center;
@@ -809,6 +809,17 @@ function sidebar() {
 
   const barre = barreDeTete();
   if (!barre) return;
+
+  /* A partir d'ici la sidebar EST rendue. La classe marque ce fait sur la
+     racine, a cote de hn-dark/hn-light : center{margin-left:220px} en
+     depend desormais (voir la feuille), au lieu de s'appliquer sans
+     condition. Avant ce marqueur, /item perdait 220px de largeur pour une
+     sidebar qui n'existait pas — le second garde-fou ci-dessus empechait
+     la sidebar de s'afficher, mais rien n'empechait la feuille de lui
+     reserver quand meme la place. Passe par addClass() comme le reste :
+     la classe disparait avec la racine au revert(), rien a defaire a la
+     main. */
+  addClass(document.documentElement, 'hn-side');
 
   const side = document.createElement('nav');
   side.className = '__side';
