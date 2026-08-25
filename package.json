@@ -1,0 +1,27 @@
+{
+  "name": "hn-redesign",
+  "version": "1.0.0",
+  "description": "Userscript qui redessine Hacker News dans Safari. Voir README.md.",
+  "main": "hn-redesign.user.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js && node test/regles.mjs && node test/contraste.mjs && node test/lint.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OmarBenje/hn-redesign.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/OmarBenje/hn-redesign/issues"
+  },
+  "homepage": "https://github.com/OmarBenje/hn-redesign#readme",
+  "devDependencies": {
+    "linkedom": "^0.18.13"
+  }
+}

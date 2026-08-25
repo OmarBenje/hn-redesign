@@ -2,7 +2,9 @@
 
 > **Source de vérité unique.** Les tâches ont existé un temps dans trois formats à trois endroits — un design doc local, deux fichiers JSONL, une issue GitHub — sans que rien ne dise lequel faisait autorité. Ce fichier les réconcilie. En cas de contradiction avec un autre document, **c'est ce fichier qui gagne.**
 
-**État au 2026-08-25 : aucune ligne de code n'existe.** Le dépôt contient un système de design ([`DESIGN.md`](DESIGN.md)) dont chaque valeur a été mesurée, et les captures qui le prouvent. Ce qui suit est ce qui reste à faire.
+**État au 2026-08-25 : les phases 1 à 5 sont livrées et vérifiées.** Le userscript fait ~1 100 lignes, CSS compris. Quatre suites le vérifient — 12 tests unitaires, 29 invariants de feuille, 9 budgets de cohérence, 72 assertions au rendu sur 5 pages — et `#hnmain` revient identique **à l'octet** après `revert()`.
+
+**Il reste T1**, la porte, qui demande un Mac : personne n'a encore vu ce projet dans Safari.
 
 ---
 
@@ -168,17 +170,44 @@ Trois points que la spec laissait ouverts, tranchés et documentés dans `DESIGN
 | Effort réel | ~2 h 30 |
 |---|---|
 
-## Phase 5 — vérification et finition
+## Phase 5 — vérification et finition ✅ **faite le 2026-08-25**
 
-| | Tâche | Effort | Source |
-|---|---|---|---|
-| **T10** | `node --test` + `linkedom` + fixtures | ~1 h 15 | |
-| **T25** | Lint de cohérence : ≤1 radius, 0 durée, 0 ombre, 0 famille d'icônes | ~40 min | Issue #1 § D — **nouveau** |
-| **T12** | Fixer les trois états — initial, spine, restauré — et la réversibilité | ~15 min | |
-| **T21** | Rails de profondeur qui expriment la profondeur, pas seulement l'imbrication | ~25 min | |
-| **T22** | Interrupteur de thème manuel — classe `hn-dark` / `hn-light`, clé `hn-redesign-theme` | ~35 min | |
+| | Tâche | État |
+|---|---|---|
+| **T10** | `node --test` + `linkedom` + fixtures | ✅ 12 tests sur le calcul pur, exécutant le **vrai** userscript |
+| **T25** | Lint de cohérence : ≤1 radius, 0 durée, 0 ombre, 0 famille d'icônes | ✅ `test/lint.mjs`, 9 budgets, vérifié par mutation |
+| **T12** | Fixer les trois états et la réversibilité | ✅ **livrée en phase 4** — voir ci-dessus |
+| **T21** | Rails de profondeur qui expriment la profondeur | ✅ un trait par ancêtre : 0:0 1:1 … 8:8 |
+| **T22** | Interrupteur de thème manuel | ✅ trois états, persistés sous `hn-redesign-theme` |
 
----
+### T10 — les tests exécutent le vrai fichier, pas une copie
+
+Le script est un seul fichier sans système de modules — contrainte du runtime, pas un choix. On ne peut donc pas l'importer. `test/harness.mjs` le lit, l'exécute dans une fonction dont les paramètres sont les globales du navigateur, et récupère le `window.hnRedesign` que le script expose déjà. **Aucune duplication de logique** : ce qui est testé est ce qui tourne.
+
+Le harness fournit un **simulateur de `a.togg`**, puisqu'il n'y a pas de `hn.js` sous Node. Il calcule son propre arbre depuis les attributs `indent` — un simulateur qui utiliserait `buildModel()` ne testerait plus rien. **Il reproduit HN ; il ne le prouve pas.** La preuve que le vrai `a.togg` se comporte ainsi est dans `test/rendu.sh`, sur la vraie page avec le vrai `hn.js`.
+
+Le test le plus utile est une **vérification croisée** : la taille de sous-arbre que le modèle calcule depuis les seuls attributs `indent` égale l'attribut `n` que HN calcule côté serveur, sur les 91 nœuds. Deux calculs indépendants du même nombre.
+
+### T25 — le lint a été vérifié par mutation
+
+Un lint qui ne trouve jamais rien est indiscernable d'un lint cassé. Six violations ont été injectées puis retirées : un second rayon, une transition, une ombre, un `!important`, une couleur en dur, un token orphelin. **Les six ont été attrapées.**
+
+Deux budgets vont au-delà de la spec, et sont ceux qui attrapent la vraie dérive : **aucune couleur écrite en dur hors des blocs de thème** — donc toute couleur a une variante sombre par construction — et **correspondance exacte entre tokens déclarés et `var()` utilisés**, dans les deux sens.
+
+### T21 — un trait par ancêtre
+
+Un trait unique dit « ceci est imbriqué » et rien de plus : à la profondeur 6 on voit exactement ce qu'on voit à la profondeur 2. La gouttière porte désormais **un trait par niveau d'ancêtre**, donc le nombre de traits *est* la profondeur — elle se compte au lieu de se deviner.
+
+Un seul motif de 22 px suffit, trait de 1 px à 11 px, répété. La gouttière fait `indent` de large, donc elle porte exactement `indent / 22` traits, et zéro à la profondeur 0. **Douze règles de largeur remplacées par une règle de fond.**
+
+### T22 — trois états, pas deux
+
+`auto` n'est pas un défaut paresseux : c'est le seul qui suive l'heure de la journée, et c'est celui qu'on veut la plupart du temps. Les deux autres existent pour le forcer. Le lien affiche l'**état courant** et non l'action — « auto » dit où on en est ; « passer en sombre » dirait où on va et laisserait ignorer d'où on part.
+
+Le comptage des liens natifs de la navbar ne bouge pas : le nôtre porte la classe `__theme` et le critère d'acceptation n°11 compte `.pagetop a:not(.__theme)`.
+
+| Effort réel | ~1 h 30 |
+|---|---|
 
 ## Ce que les tests ne couvriront jamais
 
@@ -205,15 +234,17 @@ Ils ne couvrent **pas** : le focus, `scrollIntoView`, la navigation `J`/`K`, le 
 ## Effort total
 
 ```
-Phase 0   porte                     ~10 min
-Phase 1   alignement du système     ~1 h
-Phase 2   fondations                ~2 h 10
-Phase 3   la liste                  ~2 h 15  fait
-Phase 4   le fil                    ~5 h 10
-Phase 5   vérification              ~3 h 10
-─────────────────────────────────────────────
+Phase 0   porte                     ~10 min    a executer par Omar
+Phase 1   alignement du système     ~1 h       fait
+Phase 2   fondations                ~2 h 10    fait
+Phase 3   la liste                  ~2 h 15    fait
+Phase 4   le fil                    ~5 h 10    fait
+Phase 5   vérification              ~3 h 10    fait
+─────────────────────────────────────────────────────
                                     ~13 h 55 en humain
 ```
+
+**Les 24 tâches d'écriture sont faites.** Il reste **T1**, la seule que je ne peux pas exécuter : elle demande un Mac, Safari et l'App Store.
 
 Ordre imposé : **0 → 1 → 2 → (3 ‖ 4) → 5**. Les phases 3 et 4 touchent des fichiers différents et peuvent avancer en parallèle une fois les fondations posées.
 

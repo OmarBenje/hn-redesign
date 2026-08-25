@@ -21,16 +21,26 @@ Le runtime est [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT),
 | `Cmd`+`Entrée` | envoyer la réponse depuis la zone de texte |
 | `Cmd`+`I` | mettre la sélection en italique |
 
+Le thème se change par un lien dans la navbar, à côté de `login` : **auto → clair → sombre**. `auto` suit les réglages du système. Le choix est retenu d'une visite à l'autre.
+
 Aucune touche n'est interceptée tant qu'un `input`, un `textarea` ou un élément `contenteditable` a le focus.
 
 ## Tests
 
 ```bash
+npm install                                       # linkedom, seule dependance
 ./design-refs/capture.sh ./design-refs/fixtures   # recapture les pages HN
-node test/regles.mjs                              # invariants de la feuille
-node test/contraste.mjs                           # les 9 couleurs, la rampe L*
-./test/rendu.sh                                   # 66 assertions au rendu, 5 pages
+npm test                                          # unitaires + feuille + contraste + lint
+./test/rendu.sh                                   # 72 assertions au rendu, 5 pages
 ```
+
+| Suite | Ce qu'elle couvre |
+|---|---|
+| `node --test test/*.test.js` | 12 tests de calcul pur — modèle d'arbre, Thread Spine, idempotence du repli, frontière, les trois états. Exécute le **vrai** userscript sous linkedom, pas une copie. |
+| `node test/regles.mjs` | 29 invariants de la feuille que le rendu ne peut pas voir — dont `a:visited`, qu'aucun navigateur ne dit honnêtement à `getComputedStyle`. |
+| `node test/contraste.mjs` | les 9 couleurs contre leur fond, la régularité de la rampe en **L\*** et la bascule de teinte. |
+| `node test/lint.mjs` | 9 budgets de cohérence. Vérifié par mutation : six violations injectées, six attrapées. |
+| `./test/rendu.sh` | 72 assertions dans Chromium sur 5 pages, dont la réversibilité du DOM **à l'octet**. |
 
 **Ce qui n'est pas couvert, et ne le sera pas :** le rendu réel dans Safari. Tout ce dépôt est mesuré dans Chromium headless, où `-apple-system` résout vers une police distincte. Une suite verte ne prouve pas que Safari rend à l'identique.
 

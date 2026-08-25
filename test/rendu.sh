@@ -91,12 +91,14 @@ echo "/news — la navbar (T24)"
 verdict "$(js '(()=>{
   const td=document.querySelector("#hnmain > tbody > tr:first-child > td");
   const cs=getComputedStyle(td), b=td.getBoundingClientRect();
-  const nav=[...document.querySelectorAll(".pagetop a")];
+  const nav=[...document.querySelectorAll(".pagetop a:not(.__theme)")];
   return JSON.stringify({
     "hauteur totale 50px (border-box)":[Math.round(b.height)===50, Math.round(b.height)+"px, box-sizing "+cs.boxSizing],
     "filet orange de 3px":[cs.borderTopWidth==="3px"&&cs.borderTopColor==="rgb(255, 102, 0)", cs.borderTopWidth+" "+cs.borderTopColor],
     "le bandeau plein a disparu":[cs.backgroundColor!=="rgb(255, 102, 0)", cs.backgroundColor],
-    "9 liens de navigation":[nav.length===9, nav.map(a=>a.textContent).join(" ")],
+    "9 liens natifs, comptage inchange":[nav.length===9, nav.map(a=>a.textContent).join(" ")],
+    "l interrupteur de theme s ajoute sans toucher au comptage":[document.querySelectorAll(".pagetop a.__theme").length===1,
+      document.querySelector(".pagetop a.__theme").textContent],
     "aucun separateur | litteral":[![...document.querySelectorAll(".pagetop")].some(p=>p.textContent.includes("|")),"0"],
     "aucun lien marque sur /news":[document.querySelectorAll(".pagetop a.__on").length===0,
       "op="+document.documentElement.getAttribute("op")]
@@ -270,6 +272,32 @@ verdict "$(js '(()=>{
       document.querySelectorAll("a.__racine-lien").length>0
       && getComputedStyle(document.querySelector("td.ind")).cursor==="pointer",
       "gouttiere cliquable, lien racine, backticks, non-lus, Cmd+Entree"]
+  })})()')" || ECHECS=1
+
+echo
+echo "/item — rails de profondeur (T21) et interrupteur de theme (T22)"
+verdict "$(js '(()=>{
+  const H=window.hnRedesign, m=H.modele;
+  const g=n=>getComputedStyle(n.el.querySelector("td.ind")).backgroundImage;
+  const larg=n=>Math.round(n.el.querySelector("td.ind").getBoundingClientRect().width);
+  const parProfondeur={}; for (const n of m.liste) if(!(n.depth in parProfondeur)) parProfondeur[n.depth]=n;
+  const prof=Object.keys(parProfondeur).map(Number).sort((a,b)=>a-b);
+  const motif=prof.filter(d=>d>0).every(d=>/repeating-linear-gradient/.test(g(parProfondeur[d])));
+  const zero=g(parProfondeur[0]);
+  /* le nombre de traits = largeur de gouttiere / 22 = la profondeur */
+  const traits=prof.map(d=>larg(parProfondeur[d])/22);
+  const lien=document.querySelector(".pagetop a.__theme");
+  const depart=lien.textContent;
+  const suite=[]; for (let i=0;i<4;i++){ lien.click(); suite.push(lien.textContent+":"+document.documentElement.className.replace("hn-redesign","").trim()); }
+  const persiste=localStorage.getItem("hn-redesign-theme");
+  while (lien.textContent!=="auto") lien.click();
+  return JSON.stringify({
+    "chaque niveau porte un trait par ancetre":[motif&&traits.every((t,i)=>t===prof[i]),
+      prof.map((d,i)=>d+":"+traits[i]).join(" ")+" traits"],
+    "la profondeur 0 na aucun trait":[larg(parProfondeur[0])===0,zero==="none"?"aucun fond":"gouttiere de largeur 0"],
+    "le trait tombe au milieu du cran, pas contre le texte":[/11px/.test(g(parProfondeur[1])),"1px a 11px sur un motif de 22"],
+    "le theme fait le tour en trois etats":[suite.length===4&&suite[3]===suite[0],suite.join(" -> ")],
+    "letat est persiste":[["auto","clair","sombre"].includes(persiste),"cle hn-redesign-theme = "+persiste]
   })})()')" || ECHECS=1
 
 echo

@@ -111,10 +111,14 @@ ok(ouvre === ferme,
 const paliers = [...css.matchAll(/tr\.__i(\d+) td\.ind img \{[^}]*width:\s*(\d+)px/g)]
   .map(x => [Number(x[1]), Number(x[2])]);
 ok(paliers.length === 12, `12 paliers d'indentation (trouve ${paliers.length})`);
-ok(paliers.every(([d, w]) => w === Math.max(0, d * 22 - 11)),
-   'chaque palier vaut indent moins 11 — le rail tombe au milieu de la gouttiere, pas contre le texte');
-ok(/tr\.athing\.comtr td\.ind \{[^}]*padding:\s*0 10px 0 0/.test(css),
-   'la gouttiere compense : (indent - 11) d image + 10 de padding + 1 de bordure = indent');
+ok(paliers.every(([d, w]) => w === d * 22),
+   'chaque palier vaut exactement depth x 22 — la gouttiere porte l indentation entiere');
+ok(/td\.ind \{[^}]*repeating-linear-gradient\(to right,\s*transparent 0, transparent 11px,\s*var\(--rail\) 11px, var\(--rail\) 12px/.test(css.replace(/\s+/g, ' ')),
+   'T21 : un motif de 22px avec un trait a 11px — le NOMBRE de traits est la profondeur');
+ok(!/td\.ind[^{]*\{[^}]*border-right/.test(css),
+   'plus de trait unique en bordure : un seul trait ne distingue pas la profondeur 2 de la 6');
+ok(/a\.__theme/.test(css) && /\.hn-redesign\.hn-dark/.test(css),
+   'T22 : l interrupteur de theme existe et la classe forcee gagne sur la media query');
 ok(/\.__apercu \{[^}]*display:\s*none/.test(css) && /tr\.coll \.__apercu/.test(css),
    "l apercu du commentaire replie est revele par la classe coll de HN, pas par du JS au moment du repli");
 ok(/tr\.__actif \.comhead::before/.test(css) && /height:\s*14px/.test(css),

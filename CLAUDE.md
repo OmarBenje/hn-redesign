@@ -48,7 +48,10 @@ README.md              installation, raccourcis, attribution MIT de refined-hack
 t1-spike.user.js       jetable, a supprimer une fois T1 repondu
 test/contraste.mjs     verifie les 9 couleurs, la regularite L* et la bascule de teinte
 test/regles.mjs        21 invariants de la feuille — specificite, rampe, tokens, budget T25
-test/rendu.sh          66 assertions au rendu, dont la reversibilite du DOM a l'octet
+test/rendu.sh          72 assertions au rendu, dont la reversibilite du DOM a l'octet
+test/harness.mjs       charge le vrai userscript sous linkedom, hors navigateur
+test/modele.test.js    12 tests de calcul pur — modele, spine, repli, frontiere
+test/lint.mjs          budget de coherence T25, verifie par mutation
 design-refs/           captures de reference + capture.sh
 test/                  node --test + linkedom (a creer, T10)
 ```
@@ -61,7 +64,7 @@ test/                  node --test + linkedom (a creer, T10)
 
 `node test/contraste.mjs` — les 9 couleurs contre leur fond dans les deux themes, la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
 
-`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, modele d'arbre, Thread Spine, clavier, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 66 assertions.
+`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, rails de profondeur, clavier, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 72 assertions.
 
 > Attention en ecrivant une assertion : **`getComputedStyle` rend une vue VIVANTE.** Lire une propriete apres avoir change l'etat rend l'etat d'apres, pas celui de la mesure. Figer en chaines tout de suite. Un marqueur parfaitement fonctionnel s'est mesure a `auto x auto` pour cette raison. Prerequis : `./design-refs/capture.sh ./design-refs/fixtures`. Moteur : Chromium headless via `browse`. **Ce n'est pas Safari.**
 
@@ -71,6 +74,10 @@ test/                  node --test + linkedom (a creer, T10)
 
 ## Tests unitaires
 
-`node --test`. Couvre le calcul pur : construction du modèle d'arbre, descente du Thread Spine, idempotence du repli, calcul de la frontière.
+`node --test test/*.test.js`, ou `npm test` pour tout enchainer. 12 tests sur le calcul pur : modele d'arbre, descente du Thread Spine, idempotence du repli, calcul de la frontiere, les trois etats.
 
-**Ne couvre pas, et ne couvrira jamais :** focus, `scrollIntoView`, navigation `J`/`K`, rendu, handlers inline de HN, comportement Safari. Environ 8 chemins sur 24. **Une suite verte ne prouve pas que la navigation marche.**
+`test/harness.mjs` execute le **vrai** userscript sous linkedom — il le lit, l'appelle dans une fonction dont les parametres sont les globales du navigateur, et recupere `window.hnRedesign`. Aucune logique dupliquee. Il fournit un **simulateur de `a.togg`**, qui calcule son propre arbre depuis les attributs `indent` : un simulateur qui utiliserait `buildModel()` ne testerait plus rien. **Il reproduit HN, il ne le prouve pas** — la preuve est dans `test/rendu.sh`, avec le vrai `hn.js`.
+
+`node test/lint.mjs` — le budget de coherence (T25). Neuf budgets, dont deux qui vont au-dela de la spec et attrapent la vraie derive : aucune couleur en dur hors des blocs de theme, et correspondance exacte entre tokens declares et `var()` utilises. **Verifie par mutation** : six violations injectees, six attrapees.
+
+**Ne couvre pas, et ne couvrira jamais :** focus, `scrollIntoView`, navigation `J`/`K` reelle, rendu, handlers inline de HN, comportement Safari. **Une suite verte ne prouve pas que la navigation marche.**

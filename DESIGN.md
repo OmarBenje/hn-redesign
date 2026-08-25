@@ -254,6 +254,8 @@ Le **16 px entre frères contre 12 px entre parent et enfant** est le seul geste
 
 L'**indentation à 22 px** rend 180 px de mesure sur un fil profondeur 10.
 
+**Le rail porte un trait par niveau d'ancêtre, pas un seul.** Un trait unique dit « ceci est imbriqué » et rien de plus : à la profondeur 6 on voit exactement ce qu'on voit à la profondeur 2. Avec un trait par ancêtre, le *nombre* de traits **est** la profondeur — elle se compte au lieu de se deviner. Un motif de 22 px, trait de 1 px à 11 px, répété sur toute la gouttière : elle fait `indent` de large, donc elle porte exactement `indent / 22` traits, et zéro à la profondeur 0. Vérifié au rendu : 0:0, 1:1, … 8:8.
+
 ## Layout
 
 - **Approche :** colonne unique disciplinée. Pas de grille, pas de sidebar, pas d'asymétrie.
@@ -332,6 +334,12 @@ En thème sombre, le bouton `add comment` natif est un rectangle blanc au milieu
 > [!warning] `/reply` et `/submit` restent natifs, et c'est structurel
 > T19 visait « aucun élément clair résiduel sur `/item`, `/reply`, `/submit` en mode sombre ». Impossible sans renoncer à T2 : ces deux pages n'ont pas de `#hnmain`, et c'est précisément ce qui met les formulaires hors d'atteinte par construction. T2 l'emporte — c'est un critère d'acceptation, T19 était un objectif. En sombre, `/reply` et `/submit` restent donc des pages claires.
 
+### Le thème
+
+Trois états, et non deux : **auto**, **clair**, **sombre**. `auto` n'est pas un défaut paresseux — c'est le seul qui suive l'heure de la journée, et c'est celui qu'on veut la plupart du temps ; les deux autres existent pour le forcer. La classe est posée sur `<html>` et gagne sur la media query, ce qui est la raison pour laquelle le bloc sombre est écrit **deux fois** dans la feuille.
+
+Le lien vit dans la navbar, à côté de `login`, et affiche l'**état courant** plutôt que l'action : « auto » dit où on en est ; « passer en sombre » dirait où on va et laisserait ignorer d'où on part. Persisté sous `hn-redesign-theme`, et silencieux si `localStorage` refuse — navigation privée, quota — plutôt que de faire tomber le reste du script.
+
 ## Motion
 
 **Aucune.** HN n'en a pas, un outil de lecture n'en a pas besoin, et la moindre transition entrerait en concurrence avec le texte. Pas d'exception.
@@ -380,6 +388,8 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Un trait de rail par ancêtre** | Un trait unique n'exprime que l'imbrication ; le nombre de traits exprime la profondeur. Une règle de fond remplace douze règles de largeur. |
+| 2026-08-25 | **Thème à trois états, `auto` par défaut** | `auto` suit l'heure et couvre le cas courant. Le lien affiche l'état, pas l'action. |
 | 2026-08-25 | **Score du spine : taille × √(longueur relative)** | Le `n` brut désigne la querelle la plus peuplée ; le volume de texte brut désigne le monologue. La racine carrée amortit pour qu'un commentaire long ne batte pas une discussion. Départage par ordre du document. |
 | 2026-08-25 | **`j` / `k` sautent les commentaires masqués** | D10 laissait le choix entre sauter et déplier l'ancêtre. Déplier annulerait le repli qu'on vient de demander. À reconsidérer à l'usage. |
 | 2026-08-25 | **Trois états, deux instantanés** | `restaure()` vise l'état d'avant-spine, `revert()` l'état du chargement. Confondre les deux rouvre une branche que l'utilisateur avait repliée à la main. |

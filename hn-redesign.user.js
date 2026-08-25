@@ -256,6 +256,11 @@ const CSS = `
    pointer a[href="news"] reviendrait a souligner le nom du site. */
 .${ROOT} #hnmain .pagetop a.__on { color: var(--accent-text); }
 
+/* T22 — l'interrupteur de theme. Un lien de plus dans la navbar, qui affiche
+   l'etat courant plutot que l'action : « auto » dit ou on en est, « passer en
+   sombre » dirait ou on va et laisserait ignorer d'ou on part. */
+.${ROOT} #hnmain a.__theme { color: var(--meta); }
+
 /* ------------------------------------------------------------ la liste T23
    Ligne fusionnee. La .subline n'est pas reecrite : ses noeuds utiles sont
    CLONES dans la .titleline et la seconde <tr> passe en display:none. Cloner
@@ -306,27 +311,26 @@ const CSS = `
    <img src=s.gif width=depth*40> en attribut de presentation, que le CSS bat.
    Plancher de mesure a la profondeur 11 : au-dela l'indentation n'augmente
    plus, sinon la mesure passe sous 420px. Le fil de reference monte a 8. */
-.${ROOT} #hnmain tr.athing.comtr td.ind { padding: 0 10px 0 0; cursor: pointer; }
-.${ROOT} #hnmain tr.athing.comtr.__d0 td.ind { padding: 0; }
+.${ROOT} #hnmain tr.athing.comtr td.ind { padding: 0; cursor: pointer; }
 .${ROOT} #hnmain tr.athing.comtr td.ind img { height: 1px; }
 
 /* Douze regles litterales plutot que 91 styles inline. La largeur est un
    attribut de presentation (<img width=depth*40>), donc le CSS la bat — mais
    la valeur est par ligne. Une classe par palier resout ca sans ecrire une
-   seule declaration inline dans le fil, et rend le repli du plancher visible :
-   au-dela de __i11 la mesure passerait sous 420px, donc __i11 est un plafond. */
+   seule declaration inline dans le fil, et rend le plancher visible : au-dela
+   de __i11 la mesure passerait sous 420px, donc __i11 est un plafond. */
 .${ROOT} #hnmain tr.__i0 td.ind img { width: 0px; }
-.${ROOT} #hnmain tr.__i1 td.ind img { width: 11px; }
-.${ROOT} #hnmain tr.__i2 td.ind img { width: 33px; }
-.${ROOT} #hnmain tr.__i3 td.ind img { width: 55px; }
-.${ROOT} #hnmain tr.__i4 td.ind img { width: 77px; }
-.${ROOT} #hnmain tr.__i5 td.ind img { width: 99px; }
-.${ROOT} #hnmain tr.__i6 td.ind img { width: 121px; }
-.${ROOT} #hnmain tr.__i7 td.ind img { width: 143px; }
-.${ROOT} #hnmain tr.__i8 td.ind img { width: 165px; }
-.${ROOT} #hnmain tr.__i9 td.ind img { width: 187px; }
-.${ROOT} #hnmain tr.__i10 td.ind img { width: 209px; }
-.${ROOT} #hnmain tr.__i11 td.ind img { width: 231px; }
+.${ROOT} #hnmain tr.__i1 td.ind img { width: 22px; }
+.${ROOT} #hnmain tr.__i2 td.ind img { width: 44px; }
+.${ROOT} #hnmain tr.__i3 td.ind img { width: 66px; }
+.${ROOT} #hnmain tr.__i4 td.ind img { width: 88px; }
+.${ROOT} #hnmain tr.__i5 td.ind img { width: 110px; }
+.${ROOT} #hnmain tr.__i6 td.ind img { width: 132px; }
+.${ROOT} #hnmain tr.__i7 td.ind img { width: 154px; }
+.${ROOT} #hnmain tr.__i8 td.ind img { width: 176px; }
+.${ROOT} #hnmain tr.__i9 td.ind img { width: 198px; }
+.${ROOT} #hnmain tr.__i10 td.ind img { width: 220px; }
+.${ROOT} #hnmain tr.__i11 td.ind img { width: 242px; }
 
 /* Espacement : 16px entre freres, 12px entre parent et premier enfant. C'est
    le seul geste hierarchique du systeme et il suffit — descendre coute moins
@@ -337,15 +341,21 @@ const CSS = `
 .${ROOT} #hnmain tr.athing.comtr.__enfant > td { padding-top: 12px; }
 .${ROOT} #hnmain tr.athing.comtr.__racine > td { padding-top: 24px; }
 
-/* Le rail de profondeur. 1px, a indent MOINS 11 — au milieu du cran de 22, et
-   non colle au texte. La gouttiere fait donc (indent - 11) d'image, 10 de
-   padding et 1 de bordure : le total retombe sur indent exactement, et le
-   contenu ne bouge pas. T21 le fera exprimer la profondeur ; ici il exprime
-   l'imbrication. */
+/* T21 — les rails expriment la PROFONDEUR, pas seulement l'imbrication.
+   Un trait unique dit « ceci est imbrique » et rien de plus : a la profondeur
+   6 on voit exactement ce qu'on voit a la profondeur 2. Ici la gouttiere porte
+   un trait par niveau d'ancetre, donc le NOMBRE de traits EST la profondeur —
+   elle se compte au lieu de se deviner.
+
+   Un seul motif de 22px suffit : trait de 1px a 11px, c'est-a-dire au milieu
+   du cran et non colle au texte, repete. La gouttiere fait indent de large,
+   donc elle porte exactement indent/22 traits, et zero a la profondeur 0. */
 .${ROOT} #hnmain tr.athing.comtr td.ind {
-  border-right: 1px solid var(--rail);
+  background-image: repeating-linear-gradient(to right,
+    transparent 0, transparent 11px,
+    var(--rail) 11px, var(--rail) 12px,
+    transparent 12px, transparent 22px);
 }
-.${ROOT} #hnmain tr.athing.comtr.__d0 td.ind { border-right: none; }
 
 /* Metadonnee -> corps : 4px. HN pose margin-bottom:-10px en style inline sur
    la div de comhead ; c'est le JS qui l'annule, reversiblement. */
@@ -514,6 +524,35 @@ const cloneSansId = el => {
   return c;
 };
 
+/* ---------------------------------------------------------- T22 le theme
+   Trois etats et non deux. « auto » n'est pas un defaut paresseux : c'est le
+   seul qui suit l'heure de la journee, et c'est celui qu'on veut la plupart du
+   temps. Les deux autres existent pour le forcer.
+
+   La classe est posee sur <html> et gagne sur la media query — c'est pour ca
+   que le bloc sombre est ecrit deux fois dans la feuille. */
+const CLE_THEME = 'hn-redesign-theme';
+const THEMES = ['auto', 'clair', 'sombre'];
+const CLASSE_THEME = { auto: null, clair: 'hn-light', sombre: 'hn-dark' };
+let lienTheme = null;
+
+function litTheme() {
+  try {
+    const v = localStorage.getItem(CLE_THEME);
+    return THEMES.includes(v) ? v : 'auto';
+  } catch (err) {
+    return 'auto';   /* navigation privee : on ne force rien */
+  }
+}
+
+function poseTheme(nom) {
+  const racine = document.documentElement;
+  racine.classList.remove('hn-light', 'hn-dark');
+  if (CLASSE_THEME[nom]) racine.classList.add(CLASSE_THEME[nom]);
+  try { localStorage.setItem(CLE_THEME, nom); } catch (err) { /* quota, prive */ }
+  if (lienTheme) lienTheme.textContent = nom;
+}
+
 /* ------------------------------------------------------------- navbar T24 */
 function navbar() {
   const barre = document.querySelector('#hnmain > tbody > tr:first-child > td');
@@ -533,6 +572,21 @@ function navbar() {
   const op = document.documentElement.getAttribute('op');
   if (['newest', 'ask', 'show', 'jobs'].includes(op)) {
     addClass(barre.querySelector(`.pagetop a[href="${op}"]`), '__on');
+  }
+
+  /* L'interrupteur va dans la cellule de droite, a cote de login. Le comptage
+     des liens natifs ne bouge pas : le notre porte la classe __theme. */
+  const droite = [...barre.querySelectorAll('.pagetop')].pop();
+  if (droite) {
+    lienTheme = document.createElement('a');
+    lienTheme.className = '__theme';
+    lienTheme.href = 'javascript:void(0)';
+    lienTheme.textContent = litTheme();
+    lienTheme.addEventListener('click', () => {
+      poseTheme(THEMES[(THEMES.indexOf(litTheme()) + 1) % THEMES.length]);
+    });
+    insere(droite, lienTheme, droite.firstChild);
+    undo.push(() => { lienTheme = null; });
   }
 }
 
@@ -891,7 +945,6 @@ function habilleFil() {
 
     /* Indentation a 22px, par une classe de palier — voir la feuille. */
     addClass(el, '__i' + Math.min(depth, PROFONDEUR_MAX));
-    if (depth === 0) addClass(el, '__d0');
 
     /* 16px entre freres, 12px entre parent et premier enfant, 24px entre deux
        fils racine. Seul le JS connait la profondeur du voisin precedent. */
@@ -1095,6 +1148,7 @@ function apply() {
   style.textContent = CSS;
   document.head.appendChild(style);
   document.documentElement.classList.add(ROOT);
+  poseTheme(litTheme());
   navbar();
   fusionner();
   habilleFil();
