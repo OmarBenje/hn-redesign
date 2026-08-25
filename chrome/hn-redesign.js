@@ -301,6 +301,50 @@ const CSS = `
   color: var(--meta); font-size: 12px;
 }
 
+/* --------------------------------------------------- la coquille : l'en-tete
+   Le chemin complet, jamais td:first-child depuis #hnmain : ce selecteur-la
+   vise la BARRE et non ses cellules — l'erreur qui colle le logo a gauche et
+   fait flotter le reste au centre.
+
+   box-sizing: border-box n'est pas decoratif : en content-box, la hauteur de
+   contenu plus les bordures rendent quelques pixels de trop et le critere de
+   hauteur echoue sur une barre pourtant juste. */
+.${ROOT} #hnmain > tbody > tr:first-child > td {
+  background: var(--page);
+  border: 0; box-sizing: border-box;
+  height: 92px; padding: 0;
+}
+.${ROOT} #hnmain > tbody > tr:first-child > td > table { width: 100%; }
+.${ROOT} #hnmain > tbody > tr:first-child > td > table td { vertical-align: middle; padding: 0; }
+.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(1) { width: 1px; white-space: nowrap; }
+.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(2) { width: 100%; text-align: center; }
+.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(3) { width: 1px; white-space: nowrap; text-align: right; }
+
+.${ROOT} #hnmain .__titre { font-size: 30px; line-height: 34px; font-weight: 700; letter-spacing: -0.012em; }
+.${ROOT} #hnmain .__titre a { color: var(--text); }
+
+.${ROOT} #hnmain .__rech {
+  display: inline-flex; align-items: center; gap: 8px;
+  width: 100%; max-width: 460px; height: 40px; padding: 0 16px;
+  box-sizing: border-box;
+  background: var(--surface-2); border-radius: var(--radius-full);
+  color: var(--meta);
+}
+.${ROOT} #hnmain .__rech svg { width: 16px; height: 16px; flex: none; }
+.${ROOT} #hnmain .__rech input {
+  flex: 1; min-width: 0; border: 0; background: none; outline: 0;
+  font-family: var(--ui); font-size: 14px; color: var(--text);
+}
+
+.${ROOT} #hnmain .__moi {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: var(--radius-full);
+  background: var(--surface-2); color: var(--author);
+  font-size: 15px; font-weight: 600;
+}
+.${ROOT} #hnmain .pagetop { font-size: 13px; line-height: 16px; color: var(--meta); }
+.${ROOT} #hnmain .pagetop a { color: var(--meta); }
+
 /* ------------------------------------------------------------ la liste T23
    Ligne fusionnee. La .subline n'est pas reecrite : ses noeuds utiles sont
    CLONES dans la .titleline et la seconde <tr> passe en display:none. Cloner
@@ -785,6 +829,87 @@ function sidebar() {
       .filter(n => n.nodeType === 3 && n.textContent.includes('|'))
       .forEach(detache);
   });
+}
+
+/* -------------------------------------------------- la coquille : l'en-tete
+   La premiere ligne de #hnmain — le bandeau orange natif — devient l'en-tete.
+   Trois cellules, que HN sert deja : le logo (parti dans la sidebar), les
+   liens (partis aussi), et login a droite. On y remet trois choses.
+
+   Le formulaire de recherche N'EST PAS FABRIQUE : HN en sert un dans son pied
+   de page, <form action="//hn.algolia.com/">. On le DEPLACE. Un formulaire
+   fabrique dupliquerait une fonction existante, et le zero requete reseau
+   tient parce qu'un action de formulaire n'est qu'une cible de navigation. */
+function entete() {
+  /* Meme piege que sidebar() : linkedom n'insere pas <tbody> implicitement,
+     un vrai navigateur si. Les deux chemins visent le meme noeud. */
+  const barre = document.querySelector('#hnmain > tbody > tr:first-child > td')
+    || document.querySelector('#hnmain > tr:first-child > td');
+  if (!barre) return;
+  addClass(barre, '__entete');
+
+  const cellules = [...barre.querySelectorAll('td')];
+  const [gauche, centre, droite] = cellules;
+  if (!gauche || !centre || !droite) return;
+
+  /* 1. Le titre. b.hnname vit dans .pagetop de la cellule du milieu ; on le
+     deplace dans la cellule de gauche, ou il devient le titre de page.
+     detache AVANT insere, pour tout noeud qui existait deja dans la page.
+     L'undo d'insere() est un simple remove() : juste pour un noeud neuf ou
+     clone, faux pour une relocalisation — le noeud ne reviendrait jamais a
+     son parent d'origine. */
+  const nom = barre.querySelector('.hnname');
+  if (nom) { addClass(nom, '__titre'); detache(nom); insere(gauche, nom, null); }
+
+  /* 2. La recherche. */
+  const forme = document.querySelector('form[action*="hn.algolia.com"]');
+  if (forme) {
+    addClass(forme, '__rech');
+    const champ = forme.querySelector('input[name="q"]');
+    /* Deux mutations sur le meme champ plus loin (placeholder ajoute, size
+       retire). Les defaire attribut par attribut rend chaque valeur mais
+       pas leur ORDRE d'origine : setAttribute() sur un attribut absent ne
+       le remet pas forcement a sa position — verifie sous linkedom, il le
+       PREPEND, et la comparaison a l'octet voit l'ordre inverse. Un clone
+       shallow, pris avant toute mutation, encode l'ordre exact tel que le
+       moteur l'a serialise ; le restaurer par un remplacement unique bat le
+       rejouer attribut par attribut, meme raisonnement que setStyle pour
+       l'attribut style brut.
+
+       Cet undo doit etre EMPILE avant celui des noeuds texte ci-dessous :
+       leur propre undo reinsere chaque noeud juste avant champ, et ca ne
+       marche que si champ est encore un enfant de forme a ce moment-la —
+       LIFO l'exige donc en dernier, empile en premier. */
+    if (champ) {
+      const pristine = champ.cloneNode(false);
+      undo.push(() => champ.parentNode.replaceChild(pristine, champ));
+    }
+    /* Le libelle « Search: » est un noeud texte litteral, hors de tout
+       element : aucune regle CSS ne l'atteint. Il devient le placeholder. */
+    [...forme.childNodes].filter(n => n.nodeType === 3).forEach(detache);
+    if (champ) {
+      champ.setAttribute('placeholder', 'Search stories, comments, or users');
+      champ.removeAttribute('size');
+      insere(forme, icone('search'), forme.firstChild);
+    }
+    /* Le formulaire lui-meme existait deja dans le pied de page : meme regle
+       detache/insere que le titre ci-dessus, pas une exception. */
+    detache(forme);
+    insere(centre, forme, null);
+  }
+
+  /* 3. La pastille. Pas d'avatar : HN n'en sert aucun, et en inventer un
+     serait la seule donnee fabriquee du projet. L'initiale du pseudo dit la
+     meme chose et elle est vraie. */
+  const pseudo = utilisateur();
+  if (pseudo) {
+    const moi = document.createElement('a');
+    moi.className = '__moi';
+    moi.href = `user?id=${pseudo}`;
+    moi.textContent = pseudo[0].toUpperCase();
+    moi.setAttribute('title', pseudo);
+    insere(droite, moi, droite.firstChild);
+  }
 }
 
 /* ------------------------------------------------------------ la liste T23 */
@@ -1339,6 +1464,7 @@ function apply() {
   document.documentElement.classList.add(ROOT);
   poseTheme(litTheme());
   sidebar();
+  entete();
   fusionner();
   habilleFil();
   return true;
@@ -1366,7 +1492,7 @@ window.hnRedesign = {
   get spine() { return spine; },
   buildModel, collapse, calculeSpine, frontiere,
   appliqueSpine, restaure, estReplie, estVisible,
-  icone, utilisateur, sidebar,
+  icone, utilisateur, sidebar, entete,
 };
 
 })();

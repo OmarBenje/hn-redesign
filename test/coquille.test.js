@@ -139,3 +139,36 @@ test('revert restaure #hnmain a l octet — logo et six liens natifs y reviennen
   api.revert();
   assert.equal(document.querySelector('#hnmain').innerHTML, temoin.querySelector('#hnmain').innerHTML);
 });
+
+test('le formulaire de recherche est celui de HN, deplace et non recree', () => {
+  const { document } = charge('news.html', NEWS);
+  const formes = [...document.querySelectorAll('form[action*="hn.algolia.com"]')];
+  assert.equal(formes.length, 1, 'un seul formulaire de recherche dans le document');
+  assert.ok(formes[0].closest('.__entete'), 'il vit desormais dans l en-tete');
+  assert.equal(formes[0].querySelector('input[name="q"]').getAttribute('placeholder'),
+    'Search stories, comments, or users');
+  assert.ok(formes[0].querySelector('svg'), 'la loupe est posee dans le formulaire');
+});
+
+test('le titre de page est le nom du site, relocalise', () => {
+  const { document } = charge('news.html', NEWS);
+  const titre = document.querySelector('.__entete .__titre');
+  assert.ok(titre, 'l en-tete porte un titre');
+  assert.equal(titre.textContent.trim(), 'Hacker News');
+});
+
+test('la pastille porte l initiale du pseudo et mene au profil', () => {
+  const { document } = charge('news.html', NEWS, connecte('omarbenje'));
+  const pastille = document.querySelector('.__entete .__moi');
+  assert.ok(pastille, 'la pastille existe pour une session ouverte');
+  assert.equal(pastille.textContent.trim(), 'O');
+  assert.equal(pastille.getAttribute('href'), 'user?id=omarbenje');
+});
+
+test('sans session, la pastille cede la place au lien login natif', () => {
+  const { document } = charge('news.html', NEWS);
+  assert.equal(document.querySelector('.__entete .__moi'), null);
+  const login = document.querySelector('.__entete a[href^="login"]');
+  assert.ok(login, 'le lien login natif reste dans l en-tete');
+  assert.equal(login.textContent.trim(), 'login');
+});
