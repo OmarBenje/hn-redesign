@@ -4,7 +4,7 @@
 
 **État au 2026-08-25 : les phases 1 à 5 sont livrées et vérifiées.** Le userscript fait ~1 100 lignes, CSS compris. Quatre suites le vérifient — 12 tests unitaires, 29 invariants de feuille, 9 budgets de cohérence, 72 assertions au rendu sur 5 pages — et `#hnmain` revient identique **à l'octet** après `revert()`.
 
-**Il reste T1**, la porte, qui demande un Mac : personne n'a encore vu ce projet dans Safari.
+**T1 est franchie** : le userscript tourne dans Safari, confirmé sur la vraie page. Les 25 tâches du plan sont faites.
 
 **En attendant, le script tourne dans Chrome.** [`chrome/`](chrome/) est une extension MV3 dont le content script est une **copie** du userscript, en `world: "MAIN"` — donc le même modèle d'exécution qu'un userscript en `@grant none`. Vérifié sur la vraie page `news.ycombinator.com`, pas seulement sur fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes (rapport 3,27).
 
@@ -15,35 +15,34 @@
 
 ---
 
-## Phase 0 — la porte
+## Phase 0 — la porte ✅ **franchie le 2026-08-25**
 
-Une seule tâche, et **tout le reste en dépend**.
+| | Tâche | État |
+|---|---|---|
+| **T1** | Spike Userscripts : charger, recharger, survivre à un redémarrage de Safari | ✅ **trois oui**, exécuté par Omar |
 
-| | Tâche | Effort | État |
-|---|---|---|---|
-| **T1** | Spike [Userscripts](https://github.com/quoid/userscripts) : charger, recharger, survivre à un redémarrage de Safari | ~10 min | script prêt — **à exécuter par Omar** |
+| Question | Réponse |
+|---|---|
+| **Q1 — charger** | oui. Bandeau vert et badge au premier chargement. |
+| **Q2 — recharger** | oui, et **dans sa forme forte** : Userscripts surveille le dossier et voit une modification faite **depuis l'extérieur**, sans passer par son éditeur intégré. |
+| **Q3 — survivre** | oui. Autorisation et dossier de travail intacts après `Cmd+Q`. |
 
-Le projet suppose que Userscripts charge un fichier local, le recharge après modification, et survit à un redémarrage. **Personne ne l'a exécuté.** Si l'une des trois réponses est non, les quatre heures suivantes sont à jeter et le plan est à refaire autour d'un autre runtime.
+**Le userscript complet a ensuite été installé et confirmé sur la vraie page dans Safari.**
 
-### Comment l'exécuter
+### Ce que le spike a appris, et qui n'était nulle part
 
-Le script est [`t1-spike.user.js`](t1-spike.user.js), à la racine. Sélecteur vérifié sur une vraie page HN : la règle CSS écrase bien le `bgcolor="#ff6600"` de l'attribut.
+**Le dossier de travail est sous sandbox** et ne se choisit pas depuis le popup — le bouton dossier le **révèle**, il n'ouvre pas de sélecteur. Le chemin est :
 
-1. **App Store → Userscripts** (Justin Wasack, gratuit). Puis Safari → Réglages → Extensions → cocher Userscripts.
-2. Autoriser l'extension sur `news.ycombinator.com` — « Toujours autoriser sur ce site ».
-3. Bouton Userscripts dans la barre d'outils → il demande un **dossier de travail** au premier lancement. Choisir **`~/dev/hn-redesign/`** — pas un sous-dossier : Userscripts ne lit qu'un seul dossier, sans récursion, et c'est là que vivront ensuite `hn-redesign.user.js` et `hn-redesign.css`.
-4. **Q1 — charger.** Ouvrir `news.ycombinator.com`. Le bandeau doit être vert, avec un badge `T1 v1` en haut à droite.
-5. **Q2 — recharger.** Passer `const VERSION = 1` à `2`, sauvegarder, recharger HN. Le badge doit afficher `T1 v2`. *Le numéro de version existe pour ça : sans lui, une modification qui n'est pas prise ressemble à une modification qui l'est.*
-6. **Q3 — survivre.** `Cmd+Q` sur Safari, rouvrir, retourner sur HN. Vert et badge toujours là.
+```
+~/Library/Containers/com.userscripts.macos.Userscripts-Extension/Data/Documents/scripts
+```
 
-Trois oui → supprimer `t1-spike.user.js` et attaquer la phase 2. Un seul non → me le dire, le plan se refait autour d'un autre runtime.
+**Un lien symbolique vers `~/dev` n'y marcherait pas** : il sort du bac à sable. On y dépose donc une copie, et [`bin/sync-safari.sh`](bin/sync-safari.sh) la pose. La réponse à Q2 est ce qui rend ce script suffisant : une copie déposée est vue sans intervention. **C'est le circuit de livraison du projet.**
 
 **Prérequis machine :** macOS 12+ et Safari 14.1+.
 
-> [!warning] Correction du 2026-08-25 — la porte bloquait moins que ce fichier ne disait
-> « Rien d'autre ne commence avant T1 » était trop fort. T1 tranche le **runtime**, pas les artefacts. Le CSS et le JS s'écrivent et se vérifient dans Chromium headless contre les fixtures — c'est ainsi que tous les prototypes ont été faits — et le chemin de sortie du design doc dit déjà que le même JS/CSS entre tel quel dans une Safari Web Extension le jour où Xcode tient sur le disque.
->
-> Formulation exacte : **T1 garde l'itération dans Safari, pas l'écriture.** Si Userscripts échoue, on perd le mode de distribution, pas le code. La phase 2 a donc été faite avant T1, vérifiée sur fixtures. Ce qui reste vraiment conditionné à T1 : voir un rendu Safari, et boucler en moins d'une minute par modification.
+> [!info] La reformulation du 2026-08-25 était juste, et n'a plus d'objet
+> « Rien d'autre ne commence avant T1 » avait été corrigé en « T1 garde l'itération dans Safari, pas l'écriture ». Les phases 1 à 5 ont donc été écrites avant, vérifiées sur fixtures puis dans Chrome. T1 a confirmé le runtime après coup, sans qu'une ligne soit à reprendre.
 
 ---
 
@@ -241,7 +240,7 @@ Ils ne couvrent **pas** : le focus, `scrollIntoView`, la navigation `J`/`K`, le 
 ## Effort total
 
 ```
-Phase 0   porte                     ~10 min    a executer par Omar
+Phase 0   porte                     ~10 min    fait
 Phase 1   alignement du système     ~1 h       fait
 Phase 2   fondations                ~2 h 10    fait
 Phase 3   la liste                  ~2 h 15    fait
@@ -251,7 +250,7 @@ Phase 5   vérification              ~3 h 10    fait
                                     ~13 h 55 en humain
 ```
 
-**Les 24 tâches d'écriture sont faites.** Il reste **T1**, la seule que je ne peux pas exécuter : elle demande un Mac, Safari et l'App Store.
+**Les 25 tâches sont faites.** Le projet tourne dans Safari via Userscripts, et dans Chrome via `chrome/`.
 
 Ordre imposé : **0 → 1 → 2 → (3 ‖ 4) → 5**. Les phases 3 et 4 touchent des fichiers différents et peuvent avancer en parallèle une fois les fondations posées.
 

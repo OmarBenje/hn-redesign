@@ -4,7 +4,9 @@ Un userscript qui redessine Hacker News dans Safari sur macOS. Exécuté par [Us
 
 **La roadmap fait autorite : [`ROADMAP.md`](ROADMAP.md).** 25 taches en 6 phases, revues eng et design passees, verdict CLEARED. En cas de contradiction avec un autre document, ROADMAP.md gagne.
 
-**T1 est une porte, et elle bloque moins qu'il n'y parait.** Le plan suppose que Userscripts charge un fichier local, le recharge apres modification, et survit a un redemarrage de Safari. **Personne ne l'a execute.** Mais T1 tranche le *runtime*, pas les artefacts : le CSS et le JS s'ecrivent et se verifient dans Chromium headless contre les fixtures. **T1 garde l'iteration dans Safari, pas l'ecriture.** Si Userscripts echoue, on perd le mode de distribution, pas le code.
+**T1 est franchie** (2026-08-25). Userscripts charge le fichier, le recharge apres une modification faite **depuis l'exterieur** du dossier, et survit a un redemarrage de Safari. Le userscript complet a ete confirme sur la vraie page.
+
+**Le dossier de travail est sous sandbox et ne se choisit pas depuis le popup** — le bouton dossier le REVELE. Le chemin est `~/Library/Containers/com.userscripts.macos.Userscripts-Extension/Data/Documents/scripts`, et un lien symbolique vers `~/dev` n'y marche pas : il sort du bac a sable. `./bin/sync-safari.sh` y depose une copie ; c'est le circuit de livraison du projet.
 
 ## Design System
 
@@ -48,10 +50,10 @@ DESIGN.md              le systeme de design — source de verite visuelle
 CLAUDE.md              ce fichier
 chrome/                l'extension MV3 — GENEREE par bin/build-chrome.sh, ne pas editer
 bin/build-chrome.sh    regenere chrome/ depuis le userscript, synchronise la version
+bin/sync-safari.sh     depose le script dans le dossier sandbox que lit Userscripts
 hn-redesign.user.js    le script — phases 2, 3 et 4 : tokens, rampe, typo, ligne fusionnee,
                        navbar, modele d'arbre, Thread Spine, clavier, barre de position
 README.md              installation, raccourcis, attribution MIT de refined-hacker-news
-t1-spike.user.js       jetable, a supprimer une fois T1 repondu
 test/contraste.mjs     verifie les 9 couleurs, la regularite L* et la bascule de teinte
 test/regles.mjs        21 invariants de la feuille — specificite, rampe, tokens, budget T25
 test/rendu.sh          72 assertions au rendu, dont la reversibilite du DOM a l'octet

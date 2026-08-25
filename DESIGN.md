@@ -415,4 +415,4 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 - **Les états de survol et les transitions.** Aucune animation dans ce projet.
 - **`/newest`, `/ask`, `/show`, `/jobs`, `/front`.** Même DOM supposé que `/news`, non vérifié.
 - **Les fils paginés.** HN pagine les très longs fils ; le spine serait alors calculé sur un arbre partiel. Non vérifié — il faudrait un fil de 500+.
-- **Le rendu réel dans Safari.** Toutes les captures viennent de Chromium headless. `-apple-system` y résout vers une police distincte, mesurée, mais ce n'est pas une preuve que Safari rend à l'identique.
+- **Le rendu réel dans Safari, *mesuré*.** Le userscript y a été installé et confirmé sur pièce le 2026-08-25 — l'interface est la bonne. Mais toutes les captures et tous les chiffres de ce fichier viennent de Chromium, où `-apple-system` résout vers autre chose que San Francisco. Aucune valeur n'a été re-mesurée dans Safari.

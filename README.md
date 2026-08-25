@@ -18,11 +18,19 @@ Le content script tourne en `world: "MAIN"`, c'est-à-dire dans le contexte de l
 
 **Vérifié sur la vraie page**, pas seulement sur des fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires modélisés jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes.
 
-### Safari — quand tu es devant ton Mac
+### Safari — vérifié le 2026-08-25
 
-Le runtime est [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT), depuis l'App Store. Il lit **un seul dossier, sans récursion** : pointer son dossier de travail sur la racine de ce dépôt.
+Le runtime est [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT), depuis l'App Store. Puis Safari → Réglages → Extensions → cocher Userscripts, et **« Toujours autoriser sur ce site »** sur `news.ycombinator.com`.
 
-> **T1 n'a pas encore été exécuté.** Personne n'a vérifié que Userscripts charge ce fichier, le recharge après modification et survit à un redémarrage de Safari. Le mode d'emploi du test est dans [`ROADMAP.md`](ROADMAP.md), phase 0.
+**Le dossier de travail est sous sandbox et ne se choisit pas depuis le popup** — le bouton dossier le *révèle*, il n'ouvre pas de sélecteur. Un lien symbolique vers ce dépôt n'y marche pas non plus : il sort du bac à sable. On y dépose donc une copie :
+
+```bash
+./bin/sync-safari.sh
+```
+
+Userscripts **surveille ce dossier** : une copie déposée est prise en compte au rechargement de la page, sans passer par son éditeur intégré. C'est ce qui fait de ce script un vrai circuit de livraison.
+
+Vérifié : chargement, rechargement après modification externe, et survie à un `Cmd+Q`.
 
 ## Raccourcis
 
