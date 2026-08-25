@@ -17,22 +17,23 @@ const Y = h => { const n = parseInt(h.slice(1), 16); return 0.2126 * lin(n >> 16
 const ratio = (a, b) => { const [x, y] = [Y(a), Y(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 const Lstar = h => { const y = Y(h); return y > 216 / 24389 ? 116 * Math.cbrt(y) - 16 : y * 24389 / 27; };
 
-const FOND = { clair: { col: '#FBFAF6', page: '#EFEDE4' }, sombre: { col: '#1A1917', page: '#121110' } };
-const PLANCHER = 3.0;   // DESIGN.md § Plancher d'accessibilite
+const FOND = { clair: { col: '#FFFFFF', page: '#F7F7F8' }, sombre: { col: '#18181B', page: '#0E0E10' } };
+const PLANCHER = 3.0;   // DESIGN.md, plancher d'accessibilite
 const RAMPE_MIN = 8;    // ecart minimal de L* entre deux crans voisins
 
 const TOKENS = [
-  ['meta',        '#6E6B64', '#8A867C'],
-  ['author',      '#4A4741', '#B0ABA0'],
-  ['accent-text', '#BF4300', '#FF6600'],
+  ['meta',        '#6B7280', '#9CA0A8'],
+  ['author',      '#4B5058', '#B8BCC3'],
+  ['accent-text', '#BF4300', '#F26207'],
   ['visited',     '#8D9195', '#636669'],
+  ['text',        '#0B0B0C', '#F2F2F3'],
 ];
 const RAMPE = [
-  ['c00', '#1F1E1A', '#E8E5DE'],
-  ['c5A', '#393834', '#C7C4B9'],
-  ['c73', '#545350', '#A5A39D'],
-  ['c88', '#72716F', '#858481'],
-  ['cDD', '#8D9195', '#636669'],
+  ['c00', '#0B0B0C', '#F2F2F3'],
+  ['c5A', '#2B2D33', '#CDCFD5'],
+  ['c73', '#4B4E56', '#A8ABB3'],
+  ['c88', '#6E7179', '#83868E'],
+  ['cDD', '#968971', '#736C54'],
 ];
 
 let echecs = [];
@@ -43,7 +44,7 @@ const ligne = (n, l, d) => {
   console.log(`  ${n.padEnd(12)} ${l} ${rl.toFixed(2).padStart(6)}:1   ${d} ${rd.toFixed(2).padStart(6)}:1`);
 };
 
-console.log(`\ncontraste contre le fond de colonne — plancher ${PLANCHER}:1\n`);
+console.log(`\ncontraste contre la surface de carte — plancher ${PLANCHER}:1\n`);
 console.log('  token        clair             sombre');
 [...TOKENS, ...RAMPE].forEach(([n, l, d]) => ligne(n, l, d));
 

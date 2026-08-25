@@ -47,61 +47,78 @@ const STYLE_ID = 'hn-redesign-style';
 
 const CSS = `
 /* ------------------------------------------------------------------ tokens
-   16 tokens. Clair par defaut, sombre par media query, et une classe de
-   surcharge qui gagne sur les deux (T22 s'en servira). */
+   21 tokens. Clair par defaut, sombre par media query, et une classe de
+   surcharge qui gagne sur les deux (T22 s'en sert).
+
+   La palette est passee du beige chaud au neutre froid avec la coquille app.
+   Les valeurs sont CALCULEES, pas choisies a l'oeil : test/contraste.mjs les
+   verifie contre leur fond dans les deux themes, verifie la regularite de la
+   rampe en L* et la bascule de teinte du dernier cran. Ne pas y toucher sans
+   relancer ce test. */
 .${ROOT} {
   --ui: -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --radius: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-full: 999px;
 
-  --page: #EFEDE4;
-  --col: #FBFAF6;
-  --meta: #6E6B64;
-  --author: #4A4741;
-  --rail: #E4E0D4;
-  --accent: #FF6600;
+  --page: #F7F7F8;
+  --surface-1: #FFFFFF;
+  --surface-2: #F1F1F3;
+  --line: #ECECEE;
+  --text: #0B0B0C;
+  --meta: #6B7280;
+  --author: #4B5058;
+  --rail: #E6E6E9;
+  --accent: #F26207;
   --accent-text: #BF4300;
   --visited: #8D9195;
 
-  --c00: #1F1E1A;
-  --c5A: #393834;
-  --c73: #545350;
-  --c88: #72716F;
-  --cDD: #8D9195;
+  --c00: #0B0B0C;
+  --c5A: #2B2D33;
+  --c73: #4B4E56;
+  --c88: #6E7179;
+  --cDD: #968971;
 }
 
 @media (prefers-color-scheme: dark) {
   .${ROOT}:not(.hn-light) {
-    --page: #121110;
-    --col: #1A1917;
-    --meta: #8A867C;
-    --author: #B0ABA0;
-    --rail: #2E2C28;
-    --accent-text: #FF6600;
+    --page: #0E0E10;
+    --surface-1: #18181B;
+    --surface-2: #232327;
+    --line: #2A2A2F;
+    --text: #F2F2F3;
+    --meta: #9CA0A8;
+    --author: #B8BCC3;
+    --rail: #2E2E34;
+    --accent-text: #F26207;
     --visited: #636669;
 
-    --c00: #E8E5DE;
-    --c5A: #C7C4B9;
-    --c73: #A5A39D;
-    --c88: #858481;
-    --cDD: #636669;
+    --c00: #F2F2F3;
+    --c5A: #CDCFD5;
+    --c73: #A8ABB3;
+    --c88: #83868E;
+    --cDD: #736C54;
   }
 }
 
 .${ROOT}.hn-dark {
-  --page: #121110;
-  --col: #1A1917;
-  --meta: #8A867C;
-  --author: #B0ABA0;
-  --rail: #2E2C28;
-  --accent-text: #FF6600;
+  --page: #0E0E10;
+  --surface-1: #18181B;
+  --surface-2: #232327;
+  --line: #2A2A2F;
+  --text: #F2F2F3;
+  --meta: #9CA0A8;
+  --author: #B8BCC3;
+  --rail: #2E2E34;
+  --accent-text: #F26207;
   --visited: #636669;
 
-  --c00: #E8E5DE;
-  --c5A: #C7C4B9;
-  --c73: #A5A39D;
-  --c88: #858481;
-  --cDD: #636669;
+  --c00: #F2F2F3;
+  --c5A: #CDCFD5;
+  --c73: #A8ABB3;
+  --c88: #83868E;
+  --cDD: #736C54;
 }
 
 /* --------------------------------------------------------------- surfaces
@@ -111,7 +128,7 @@ const CSS = `
 .${ROOT} body { background: var(--page); }
 /* 28px reserves en bas : la barre de position est en position fixed et
    couvrirait le dernier commentaire du fil sans cette reserve. */
-.${ROOT} #hnmain { background: var(--col); padding-bottom: 28px; }
+.${ROOT} #hnmain { background: var(--surface-1); padding-bottom: 28px; }
 
 /* Padding lateral de colonne : 48px, la valeur de DESIGN.md. La navbar l'avait
    deja dans ses propres cellules ; le contenu, non — le rang commencait a 7px
@@ -246,9 +263,12 @@ const CSS = `
    contenu plus 4px de bordures rendent 51px, et le critere de hauteur echoue
    sur une barre pourtant juste. */
 .${ROOT} #hnmain > tbody > tr:first-child > td {
-  background: var(--col);
+  background: var(--surface-1);
   border-top: 3px solid var(--accent);
-  border-bottom: 1px solid var(--rail);
+  /* --line et non --rail : ce trait separe la navbar du contenu, une
+     frontiere entre deux zones de l'interface — pas une profondeur d'arbre,
+     ou --rail reste reserve. */
+  border-bottom: 1px solid var(--line);
   box-sizing: border-box;
   height: 50px;
   padding: 0;
@@ -266,7 +286,7 @@ const CSS = `
    bat. Le border:1px white solid, lui, est en style inline — c'est le JS qui
    l'annule (setStyle, donc reversible). */
 .${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(1) img {
-  width: 20px; height: 20px; border-radius: var(--radius);
+  width: 20px; height: 20px; border-radius: var(--radius-md);
 }
 /* Pas de letter-spacing negatif ici : 13px est sous le palier de 17px.
    L'issue #1 § C ecrivait -.002em, anterieur a l'amendement A1. */
@@ -276,7 +296,7 @@ const CSS = `
 }
 .${ROOT} #hnmain .pagetop a { color: var(--meta); }
 .${ROOT} #hnmain .pagetop .hnname { font-size: 14px; font-weight: 600; }
-.${ROOT} #hnmain .pagetop .hnname a { color: var(--c00); }
+.${ROOT} #hnmain .pagetop .hnname a { color: var(--text); }
 /* La page active. Jamais sur /news : il n'y a la aucun item a marquer, et
    pointer a[href="news"] reviendrait a souligner le nom du site. */
 .${ROOT} #hnmain .pagetop a.__on { color: var(--accent-text); }
@@ -452,7 +472,7 @@ const CSS = `
   line-height: 28px;
   box-sizing: border-box;
   border-top: 1px solid var(--rail);
-  background: var(--col);
+  background: var(--surface-1);
   color: var(--meta);
   font-size: 12px;
   letter-spacing: .1px;
@@ -475,28 +495,49 @@ const CSS = `
 /* T19 — les controles de formulaire. En sombre, le bouton natif add comment
    est un rectangle blanc au milieu d'une page noire. La famille de la zone de
    texte n'est PAS touchee : HN la met en monospace deliberement, et la phase 2
-   a choisi de respecter ce choix. On corrige les couleurs, pas la voix. */
-.${ROOT} #hnmain input[type="submit"],
+   a choisi de respecter ce choix. On corrige les couleurs, pas la voix.
+
+   button et input[type=text] restent sur --meta/--surface-1/--radius-md : la
+   coquille app (etape T1) ne recable que input[type=submit] et textarea, qui
+   reposent desormais sur la surface secondaire — voir plus bas. */
 .${ROOT} #hnmain button {
   font-family: var(--ui);
   font-size: 13px;
   color: var(--c00);
-  background: var(--col);
+  background: var(--surface-1);
   /* --meta et non --rail. Le systeme n'a aucune surface : ces controles sont
      du texte dans un cadre de 1px, et ce cadre est la SEULE chose qui les rend
      reperables. Il doit donc passer le plancher — --meta donne 5,09:1 en clair
      et 4,84:1 en sombre contre le fond de colonne, la ou --rail, fait pour
      disparaitre derriere le texte, tombe sous 1,5:1. */
   border: 1px solid var(--meta);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 4px 12px;
 }
-.${ROOT} #hnmain textarea,
 .${ROOT} #hnmain input[type="text"] {
   color: var(--c00);
-  background: var(--col);
+  background: var(--surface-1);
   border: 1px solid var(--meta);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
+}
+
+/* Le champ de reponse et les boutons de HN reposent sur la surface secondaire.
+   Ils y etaient deja en gris natif ; ils passent au token, donc au theme.
+   textarea ne recoit PAS de font-family : elle reste en monospace natif,
+   comme le reste du fichier le respecte deja (voir selecteur universel plus
+   haut, qui exclut explicitement input/textarea/select). */
+.${ROOT} #hnmain input[type="submit"],
+.${ROOT} #hnmain textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.${ROOT} #hnmain input[type="submit"] {
+  font-family: var(--ui);
+  font-size: 13px;
+  border-radius: var(--radius-full);
+  padding: 4px 14px;
 }
 
 /* ----------------------------------------------------------------- focus
@@ -506,7 +547,7 @@ const CSS = `
 .${ROOT} #hnmain :focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
 }
 `;
 

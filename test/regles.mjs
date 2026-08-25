@@ -61,18 +61,19 @@ const bloc = re => { const b = css.match(re); return b ? [...b[1].matchAll(/(--[
 const clair = bloc(/\.hn-redesign \{([\s\S]*?)\}/);
 const media = bloc(/@media \(prefers-color-scheme: dark\) \{\s*\.hn-redesign:not\(\.hn-light\) \{([\s\S]*?)\}/);
 const forced = bloc(/\.hn-redesign\.hn-dark \{([\s\S]*?)\}/);
-ok(clair.length === 16, `16 tokens en clair (trouve ${clair.length})`);
+ok(clair.length === 21, `21 tokens en clair (trouve ${clair.length})`);
 ok(media.length === forced.length && media.every((t, i) => t === forced[i]),
    `la media query et .hn-dark redefinissent exactement les memes ${media.length} tokens`);
 const jamaisRedefinis = clair.filter(t => !media.includes(t));
-ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius', '--accent'].includes(t)),
+ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius-sm', '--radius-md', '--radius-full', '--accent'].includes(t)),
    `seuls les tokens sans variante de theme ne sont pas redefinis (${jamaisRedefinis.join(' ')})`);
 
-/* 4. budget de coherence — T25 */
+/* 4. budget de coherence — T25, revise avec la coquille app */
 const radius = new Set([...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()));
-ok(radius.size <= 1, `<= 1 valeur de border-radius (${[...radius].join(', ') || 'aucune'})`);
+ok(radius.size <= 3, `<= 3 valeurs de border-radius (${[...radius].join(', ') || 'aucune'})`);
 ok(!/transition|animation/.test(css), '0 transition, 0 animation');
-ok(!/box-shadow/.test(css), '0 ombre');
+const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()));
+ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
 
 /* 5. T2 — rien hors de #hnmain sauf le fond de page, qui est sous .hn-redesign */
 const horsScope = regles.filter(r => !r.sel.includes('#hnmain') && !r.sel.startsWith('.hn-redesign'));

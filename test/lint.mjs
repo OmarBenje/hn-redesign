@@ -32,10 +32,11 @@ const budget = (nom, valeurs, max, note) => {
 
 console.log('\nbudget de coherence\n');
 
-budget('valeurs de border-radius', [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()), 1,
-  'un seul rayon dans tout le projet, parce que le systeme n a aucune surface');
+budget('valeurs de border-radius', [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()), 3,
+  'trois rayons et pas un de plus : sm pour les pilules de metadonnee, md pour les cartes et les onglets, full pour les pastilles');
 budget('durees de transition ou d animation', [...css.matchAll(/(?:transition|animation)[^;]*:\s*([^;]+);/g)].map(x => x[1].trim()), 0);
-budget('ombres', [...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()), 0);
+budget('ombres', [...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()), 1,
+  'une seule ombre dans tout le systeme, sur la carte, et elle disparait en sombre');
 budget('familles d icones', [...css.matchAll(/font-family:\s*([^;]*(?:icon|awesome|material)[^;]*);/gi)].map(x => x[1].trim()), 0);
 budget('declarations !important', [...css.matchAll(/([^;{]*!important)/g)].map(x => x[1].trim()), 0,
   'une feuille sans !important reste raisonnable a la lecture');
