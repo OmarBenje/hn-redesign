@@ -264,3 +264,48 @@ test('revert rend #hnmain identique a l octet sur /news', () => {
   const apres = document.querySelector('#hnmain').innerHTML;
   assert.equal(apres, temoinBrut('news.html', connecte('omarbenje')).querySelector('#hnmain').innerHTML);
 });
+
+/* La ruling du controleur, tache 8 partie A : sidebar() ne tourne pas sur
+   /item, mais entete() si — les six liens natifs restaient coinces dans
+   .pagetop, dans la meme cellule que la pastille de recherche a 100% de
+   largeur. Ils sont desormais releves sous le titre, cellule de gauche. */
+test('sur /item, les six liens natifs sont releves sous le titre', () => {
+  const { document } = charge();
+  const secondaire = document.querySelector('.__entete .__item-nav');
+  assert.ok(secondaire, 'la rangee secondaire existe dans l en-tete');
+  const liens = [...secondaire.querySelectorAll('a')].map(a => a.getAttribute('href'));
+  assert.deepEqual(liens, ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']);
+  for (const href of liens)
+    assert.equal(document.querySelectorAll(`a[href="${href}"]`).length, 1,
+      `${href} existe une seule fois — deplace, pas clone`);
+});
+
+test('sur /item, aucun separateur | litteral ne reste dans .pagetop', () => {
+  const { document } = charge();
+  const pagetops = [...document.querySelectorAll('.pagetop')];
+  assert.ok(pagetops.length > 0, 'la fixture porte au moins un .pagetop');
+  assert.ok(pagetops.every(p => !p.textContent.includes('|')), 'aucun | residuel');
+});
+
+test('sur /item, la pastille de recherche reste dans la cellule centrale', () => {
+  const { document } = charge();
+  const rech = document.querySelector('.__entete .__rech');
+  assert.ok(rech, 'le formulaire de recherche existe dans l en-tete de /item aussi');
+});
+
+test('sur /news, entete() ne pose pas de rangee .__item-nav', () => {
+  const { document } = charge('news.html', NEWS);
+  assert.equal(document.querySelector('.__item-nav'), null,
+    'la rangee secondaire est une bascule pour /item, pas un ajout permanent');
+});
+
+test('revert restaure #hnmain a l octet sur /item — les six liens y reviennent', () => {
+  /* Meme piege que pour la sidebar sur /news (voir plus haut) : ces six
+     liens EXISTAIENT deja dans la page, ils sont deplaces, pas crees. Sans
+     detache() prealable, l'undo de insere() (un simple remove()) les
+     laisserait perdus hors de #hnmain apres revert(). */
+  const temoin = temoinBrut('item.html');
+  const { api, document } = charge();
+  api.revert();
+  assert.equal(document.querySelector('#hnmain').innerHTML, temoin.querySelector('#hnmain').innerHTML);
+});

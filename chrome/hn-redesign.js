@@ -332,6 +332,12 @@ const CSS = `
 .${ROOT} #hnmain .__titre { font-size: 30px; line-height: 34px; font-weight: 700; letter-spacing: -0.012em; }
 .${ROOT} #hnmain .__titre a { color: var(--text); }
 
+/* Sur /item seulement : les six liens natifs, sans sidebar pour les
+   accueillir. Meme registre que .__nav-2 dans la sidebar, en ligne plutot
+   qu'en colonne — une rangee compacte sous le titre, pas une section. */
+.${ROOT} #hnmain .__entete .__item-nav { display: flex; gap: 12px; margin-top: 4px; }
+.${ROOT} #hnmain .__entete .__item-nav a { color: var(--meta); font-size: 13px; }
+
 .${ROOT} #hnmain .__rech {
   display: inline-flex; align-items: center; gap: 8px;
   width: 100%; max-width: 460px; height: 40px; padding: 0 16px;
@@ -970,6 +976,40 @@ function entete() {
     moi.textContent = pseudo[0].toUpperCase();
     moi.setAttribute('title', pseudo);
     insere(droite, moi, droite.firstChild);
+  }
+
+  /* 4. Sur /item, sidebar() rend la main tot (garde-fou table.fatitem) : le
+     fil ne cede pas 220px. Mais entete() tourne quand meme, et les six liens
+     natifs restent coinces dans .pagetop, au milieu de la cellule centrale —
+     la ou la pastille de recherche prend maintenant 100% de la largeur. La
+     coquille a ete pensee pour une cellule vide ; /item ne l'est pas.
+
+     Releves sous le titre, dans la cellule de gauche, en ligne secondaire :
+     meme traitement que .__nav-2 dans la sidebar (13px, var(--meta), sans
+     icone) — une destination, pas une section. detache AVANT insere, memes
+     raisons que le logo et les six liens de sidebar() : ce sont des noeuds
+     qui EXISTENT deja dans la page, pas des noeuds neufs, et l'undo
+     d'insere() est un simple remove() qui ne les rendrait jamais a leur
+     parent d'origine.
+
+     Le pli des « | » reste le DERNIER push de ce bloc, comme dans sidebar() :
+     l'undo de detache(a) plus haut retrouve sa position via le nextSibling
+     capture au moment du detache, qui n'est stable que si les noeuds texte
+     sont deja revenus a leur place au moment ou CE undo-la s'execute — LIFO
+     l'exige donc pousse en dernier. */
+  if (document.querySelector('#hnmain table.fatitem')) {
+    const secondaire = document.createElement('div');
+    secondaire.className = '__item-nav';
+    for (const href of ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']) {
+      const a = barre.querySelector(`.pagetop a[href="${href}"]`);
+      if (a) { detache(a); insere(secondaire, a, null); }
+    }
+    insere(gauche, secondaire, null);
+    barre.querySelectorAll('.pagetop').forEach(p => {
+      [...p.childNodes]
+        .filter(n => n.nodeType === 3 && n.textContent.includes('|'))
+        .forEach(detache);
+    });
   }
 }
 
