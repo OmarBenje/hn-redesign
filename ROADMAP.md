@@ -20,15 +20,30 @@ Rien d'autre ne commence avant que T1 réponde oui trois fois.
 
 ---
 
-## Phase 1 — aligner le système avant d'écrire du CSS
+## Phase 1 — aligner le système avant d'écrire du CSS ✅ **faite le 2026-08-25**
 
 → **[Issue #1](https://github.com/OmarBenje/hn-redesign/issues/1)**, sections A et E.
 
-Amendements de valeurs dans `DESIGN.md` : tracking en deux paliers, interligne du corps à 22 px, token `--radius`, spécification `:focus-visible`, et deux amendements de prémisses.
+| | Amendement | État |
+|---|---|---|
+| **A1** | Tracking en deux paliers : `0` sous 17 px, `-0.012em` au-dessus. Métadonnée à `+0.1px` documentée comme exception | ✅ |
+| **A2** | Interligne du corps 23 → **22 px** (ratio 1,47) | ✅ |
+| **A3** | `--radius: 2px`, valeur unique du projet | ✅ |
+| **A4** | `:focus-visible` spécifié — `outline` 2 px en accent texte, offset 2 px | ✅ |
+| **E1** | Prémisse 3 reformulée : le HTML fonctionnel reste *atteignable*, la présentation peut relocaliser des nœuds | ✅ |
+| **E2** | L'orange reste l'ancre mais cesse d'être un aplat de 50 px — filet de 3 px, et jamais du texte en clair | ✅ |
 
-**Doit précéder toute la phase 2.** Après, chaque valeur est dupliquée dans la feuille de style et la corriger coûte dix fois plus.
+**Trois chiffres du système étaient faux et ont été corrigés en re-mesurant au DOM :**
 
-| Effort | ~1 h |
+| Affirmation | Réalité mesurée |
+|---|---|
+| « à 23 px : 11 commentaires ; à 24 px : 10 » | **15 entamés / 14 entiers à 22, 23 et 24 px.** La densité du premier écran ne dépend pas de l'interligne. |
+| plancher de densité : 11 commentaires | **14 entiers.** Le plancher était trois crans trop bas — il ne protégeait rien. |
+| 25 posts sur la liste | **24.** |
+
+Les trois venaient d'un comptage à l'œil sur capture. Règle retenue : **la densité se mesure au `getBoundingClientRect`.** L'argument pour 22 px n'est donc plus la densité mais les **−935 px** de défilement sur le fil de 206 (35 168 contre 36 103), gratuits.
+
+| Effort réel | ~1 h |
 |---|---|
 
 ---

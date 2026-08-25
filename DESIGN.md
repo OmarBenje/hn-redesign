@@ -1,7 +1,7 @@
 # Design System — hn-redesign
 
-> Créé le 2026-08-25 par `/design-consultation`. Typographie et page d'accueil révisées le même jour.
-> Chaque valeur de ce fichier a été vérifiée : les contrastes sont calculés, la densité est mesurée, et le système entier a été rendu sur la vraie page d'accueil et un vrai fil de 206 commentaires, dans les deux thèmes. Les captures sont dans `design-refs/`.
+> Créé le 2026-08-25 par `/design-consultation`. Typographie et page d'accueil révisées le même jour. **Amendé le 2026-08-25 par la phase 1** — tracking, interligne, rayon, focus, et deux chiffres de densité corrigés.
+> Chaque valeur de ce fichier a été vérifiée : les contrastes sont calculés, la densité est mesurée **au `getBoundingClientRect`** — jamais à l'œil sur une capture, une méthode qui a produit deux chiffres faux avant d'être abandonnée — et le système entier a été rendu sur la vraie page d'accueil et un vrai fil de 206 commentaires, dans les deux thèmes. Les captures sont dans `design-refs/`.
 
 > Le reste a faire vit dans [`ROADMAP.md`](ROADMAP.md) : 25 taches, 6 phases. Ce fichier-ci ne dit que **a quoi ca doit ressembler**.
 
@@ -42,17 +42,34 @@ Une alternative avait été proposée — « je vois où est la vraie discussion
 
 ### Échelle
 
-| Élément | Taille | Interlignage |
-|---|---|---|
-| Titre de post (`/item`) | 21 px | 28 px, `letter-spacing: -.015em` |
-| **Titres de liste (`/news`)** | **15,5 → 19 px** | 1,34 — voir *Pondération par score* |
-| **Corps de commentaire** | **15 px** | **23 px** (1,53) |
-| Commentaire replié | 13,5 px | 23 px |
-| Métadonnée | 12 px | 16 px, `letter-spacing: .1px` |
-| Code dans un commentaire | 13 px | 20 px, mono système |
-| Barre de position | 12 px | 28 px (= hauteur de la barre) |
+| Élément | Taille | Interlignage | Tracking |
+|---|---|---|---|
+| Titre de post (`/item`) | 21 px | 28 px | `-0.012em` |
+| **Titres de liste (`/news`)** | **15,5 → 19 px** | 1,34 — voir *Pondération par score* | `0` sous 17 px, `-0.012em` au-dessus |
+| **Corps de commentaire** | **15 px** | **22 px** (1,47) | `0` |
+| Commentaire replié | 13,5 px | 22 px | `0` |
+| Métadonnée | 12 px | 16 px | `+0.1px` — **seule exception**, voir ci-dessous |
+| Code dans un commentaire | 13 px | 20 px, mono système | `0` |
+| Barre de position | 12 px | 28 px (= hauteur de la barre) | `0` |
 
-**L'interlignage de 23 px sur le corps n'est pas un arrondi, c'est une contrainte.** À 24 px, SF ne tient que 10 commentaires par écran et viole le plancher de densité. À 23 px : 11 commentaires, fil de 36 062 px — à 0,5 % de la meilleure candidate testée. Un pixel d'interligne vaut un commentaire par écran.
+**Tracking : deux paliers, et rien entre les deux.** `letter-spacing: 0` sous 17 px, `-0.012em` de 17 à 24 px. Une seule valeur négative dans tout le système. Le crénage négatif corrige un défaut qui n'apparaît qu'au-dessus de 17 px ; appliqué au corps il resserre un texte qui n'en a pas besoin.
+
+La **métadonnée à 12 px garde `+0.1px`**, tracking *positif*. Ce n'est pas une entorse au palier : c'est la pratique inverse, l'ouverture d'un texte trop petit. Écrit ici pour qu'un lint ou une relecture ne le prenne pas pour une dérive. Le palier ne régit que le crénage négatif.
+
+**L'interlignage du corps est passé de 23 px à 22 px** (ratio 1,47). Gain mesuré sur le fil de référence de 206 commentaires : **35 168 px contre 36 103 px, soit −935 px** de défilement, à densité rigoureusement identique.
+
+> [!warning] Correction du 2026-08-25 — une justification de ce fichier était fausse
+> Ce paragraphe affirmait : *« à 24 px, SF ne tient que 10 commentaires par écran ; à 23 px, 11. Un pixel d'interligne vaut un commentaire par écran. »* **C'est faux, et l'affirmation venait d'un comptage à l'œil sur une capture.**
+> Re-mesuré au DOM sur le fil de 206, viewport 1400 × 1900, `getBoundingClientRect` :
+>
+> | Interligne | Hauteur du fil | Commentaires entamés | Commentaires entiers |
+> |---|---|---|---|
+> | 22 px | 35 168 px | 15 | 14 |
+> | 23 px | 36 103 px | 15 | 14 |
+> | 24 px | 37 038 px | 15 | 14 |
+> | *Charter 15,5/24 (rejetée)* | *36 894 px* | *15* | *14* |
+>
+> **La densité du premier écran ne bouge pas avec l'interligne.** Le premier écran est dominé par l'en-tête du post et deux ou trois commentaires longs ; ±1 px d'interligne ne déplace rien à cette échelle. Le vrai argument pour 22 px n'est pas la densité, c'est les 935 px de défilement en moins sur le fil entier — gratuits, puisque le ratio 1,47 reste dans la plage de lecture confortable.
 
 Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est pas le contenu, c'est l'étiquette du fil.
 
@@ -77,14 +94,19 @@ Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est 
 | Rail de branche active | `#FF6600` | `#FF6600` |
 | **Accent texte** | **`#BF4300`** (5,00:1) | `#FF6600` (5,98:1) |
 | **Lien visité** | **`#8D9195`** | `#636669` |
+| **Anneau de focus** | **`#BF4300`** (5,00:1) | `#FF6600` (5,98:1) |
+| **`--radius`** | `2px` | `2px` |
 
 ### ⚠️ La règle de l'orange
 
 **`#ff6600` ne peut pas être du texte en thème clair.** Mesuré : **2,81:1** sur `#FBFAF6`, **2,70:1** sur le beige natif de HN. Il échoue même au plancher de 3:1 de ce système — un lien orange serait moins lisible que le commentaire le plus enterré du fil.
 
-- Aplats de 3 px et plus (bandeau, rail de branche active, marqueur du commentaire actif) → `#FF6600`, dans les deux thèmes.
+- Aplats de 3 px et plus (filet de navbar, carré du logo, rail de branche active, marqueur du commentaire actif) → `#FF6600`, dans les deux thèmes.
 - Texte, en thème clair → `#BF4300`.
 - Texte, en thème sombre → `#FF6600` tel quel, il tient à 5,98:1.
+- Anneau de focus → accent texte, jamais orange pur. Voir § `:focus-visible`.
+
+**L'orange cesse d'être une barre pleine.** Le bandeau natif de 50 px devient un **filet de 3 px** plus le carré du logo (T24, spec dans l'issue #1 § C). L'ancre visuelle subsiste — on reconnaît HN immédiatement — sans que 50 px d'orange saturé se disputent l'attention avec le premier titre de la liste. C'est le seul endroit du système où l'orange occupe une surface, et il en occupe désormais 3 px.
 
 ### ⚠️ Les deux signaux de HN qu'une règle de couleur naïve détruit
 
@@ -116,6 +138,22 @@ Le token `--visited` reprend volontairement la valeur du cran froid `cDD`. **Mê
 
 Vérifié sur le seul `cDD` du fil de référence : le commentaire enterré se lit comme **une note en marge**, pas comme un texte effacé. Sur HN natif il serait à `#dddddd`, 1,25:1, illisible par construction.
 
+### `:focus-visible` — la seule affordance d'état du système
+
+```css
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+```
+
+`:focus-visible` et non `:focus` : le clavier reçoit l'anneau, la souris ne le reçoit pas. Sur un site fait de liens texte, un anneau à chaque clic serait du bruit permanent.
+
+La couleur est **l'accent texte, pas l'orange pur** — c'est la même règle de l'orange qu'au-dessus, et pour la même raison. Vérifié contre le fond de colonne : `#BF4300` sur `#FBFAF6` = **5,00:1** en clair, `#FF6600` sur `#1A1917` = **5,98:1** en sombre. L'orange pur en clair tomberait à 2,81:1 et échouerait au plancher de 3:1 — un anneau de focus invisible est pire qu'absent, parce qu'il donne l'illusion d'être géré.
+
+`outline` et non `border` : l'`outline` ne participe pas au flux, donc l'anneau ne déplace rien au moment où il apparaît. C'est ce qui permet de garder la densité pendant une navigation au clavier.
+
 ### Plancher d'accessibilité
 
 **3:1 sur tout texte de contenu.** Déviation assumée à la règle usuelle de 4,5:1 : à 4,5:1 sur les cinq crans, la rampe est conservée sur le papier et détruite en pratique. 3:1 garde le signal lisible *en tant que signal* tout en laissant le texte lisible si on décide de le lire.
@@ -137,7 +175,7 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 
 **3. Hiérarchie de la ligne de métadonnées.** Le nombre de commentaires est **la seule chose colorée** de la ligne (`--accent-text`) : c'est là qu'on clique. Le score est en `--c2` et en gras, en chiffres tabulaires. `hide`, `past`, `favorite` restent en gris méta. L'âge reste en gris méta.
 
-**Densité mesurée : 25 posts visibles** sur un viewport 1400 × 1500 (HN natif : 30, mais en Verdana 10 px).
+**Densité mesurée au DOM : 24 posts entamés** sur un viewport 1400 × 1500, hauteur de ligne 58 px (HN natif : 30, mais en Verdana 10 px). La ligne fusionnée de T23 ramène la hauteur de ligne à 32 px et la densité à 30 posts — mesuré sur prototype, pas encore implémenté.
 
 ## Spacing
 
@@ -165,15 +203,20 @@ L'**indentation à 22 px** rend 180 px de mesure sur un fil profondeur 10.
 - **Colonne :** 880 px, centrée.
 - **Mesure de texte :** 660 px à la profondeur 0. **Bord droit fixe** : c'est l'indentation qui mange la gauche.
 - **Plancher de mesure :** 420 px. Au-delà de la profondeur 11, l'indentation cesse d'augmenter.
-- **Border radius :** aucun, sauf 2 px sur les favicons.
+- **Border radius : une seule valeur dans tout le projet, `--radius: 2px`.** Le système n'a aucune surface — ni carte, ni panneau, ni bouton — donc deux candidats seulement : le favicon de domaine et l'anneau de focus. Les deux prennent la même valeur. C'est aussi ce qui fait passer le lint de cohérence (T25 : ≤ 1 rayon distinct).
 
 ### Densité — contrainte dure
 
-**11 commentaires sur un viewport 1400 × 1900. 25 posts sur 1400 × 1500.** Mesurés, pas estimés.
+**14 commentaires entiers (15 entamés) sur un viewport 1400 × 1900. 24 posts sur 1400 × 1500.** Mesurés au DOM, pas comptés à l'œil.
 
 C'est une contrainte, pas un effet de bord. Aérer et le Thread Spine résolvent le **même** problème et se combattent. Une direction plus généreuse (~6 commentaires par écran) a été rendue puis rejetée : elle doublait le scroll que le Thread Spine existe pour réduire.
 
-**Toute modification qui fait passer la densité sous 11 commentaires ou 24 posts par écran doit être justifiée explicitement.**
+**Toute modification qui fait passer la densité sous 14 commentaires entiers ou 24 posts par écran doit être justifiée explicitement.**
+
+> [!warning] Ces deux chiffres ont été corrigés le 2026-08-25
+> Le plancher disait *11 commentaires* et *25 posts*. Les deux venaient d'un comptage à l'œil sur capture. Re-mesurés au DOM : **14 entiers / 15 entamés** pour le fil, **24** pour la liste. Le plancher de commentaires était donc trois crans trop bas — il ne protégeait rien. Corollaire : les mesures de densité de ce projet se font au `getBoundingClientRect`, jamais sur une capture.
+
+**Cible de la liste : 30 posts**, atteinte par la ligne fusionnée à 32 px (T23, mesurée sur prototype : hauteur médiane 32 px, 30 posts entamés). Tant que T23 n'est pas livrée, le plancher reste 24.
 
 ## Motion
 
@@ -181,7 +224,7 @@ C'est une contrainte, pas un effet de bord. Aérer et le Thread Spine résolvent
 
 ## Pourquoi le système est cohérent
 
-Le principe est « enfin je peux lire ». La densité conservée évite de créer le scroll que le Thread Spine devra combattre. L'interligne à 23 px est le prix exact payé pour tenir cette densité avec SF. L'indentation réduite rend en largeur ce que l'interligne prend en hauteur. L'absence totale de décoration garantit que rien ne concurrence le texte. La couleur ne porte que deux informations, toutes deux héritées de HN, et le froid signifie la même chose partout.
+Le principe est « enfin je peux lire ». La densité conservée évite de créer le scroll que le Thread Spine devra combattre. L'interligne à 22 px rend 935 px de défilement sur un fil long sans rien coûter à la lisibilité ni à la densité. L'indentation réduite rend en largeur ce que l'interligne prend en hauteur. L'absence totale de décoration garantit que rien ne concurrence le texte — et laisse au système un seul rayon, une seule durée (aucune), une seule ombre (aucune). La couleur ne porte que deux informations, toutes deux héritées de HN, et le froid signifie la même chose partout ; l'anneau de focus reprend l'accent texte plutôt que d'introduire une troisième couleur.
 
 Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 
@@ -218,11 +261,16 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | Indentation 22 px | Rend 180 px de mesure à la profondeur 10. |
 | 2026-08-25 | Plancher d'accessibilité à 3:1, pas 4,5:1 | À 4,5:1 les cinq crans se ressemblent : la rampe survit sur le papier et meurt en pratique. |
 | 2026-08-25 | **Charter abandonnée, SF adoptée** | Serif rendu puis rejeté par Omar sur pièce. Cinq candidates mesurées. **Supersede la décision typographique initiale.** |
-| 2026-08-25 | **Interligne du corps 24 → 23 px** | SF coûte 46 lignes de plus que Seravek sur le vrai corpus. 23 px rend le commentaire perdu : 11 par écran, fil à 0,5 % de la meilleure candidate. |
+| 2026-08-25 | ~~**Interligne du corps 24 → 23 px**~~ | ~~SF coûte 46 lignes de plus que Seravek. 23 px rend le commentaire perdu : 11 par écran.~~ **Superseded le 2026-08-25** — la densité ne dépend pas de l'interligne, voir la ligne suivante. |
+| 2026-08-25 | **Interligne du corps → 22 px**, et la densité corrigée | Re-mesuré au DOM : 15 commentaires entamés à 22, 23 **et** 24 px. L'argument « un pixel vaut un commentaire » était faux, issu d'un comptage à l'œil. 22 px se justifie autrement : −935 px de défilement, ratio 1,47, densité inchangée. Plancher corrigé de 11 à 14 commentaires entiers, de 25 à 24 posts. |
+| 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
+| 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
+| 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
 | 2026-08-25 | **La liste entre dans le périmètre** | Pondération par score, favicon avec repli, hiérarchie de la ligne méta, et préservation de `a:visited`. |
 
 ## Ce que ce fichier ne couvre pas
 
+- **La navbar en détail.** Le principe est ici (filet de 3 px, hauteur totale 50 px, accent en aplat) ; les sélecteurs, le marquage de la page active et le retrait des séparateurs `|` vivent dans l'issue #1 § C.
 - **Mobile et iOS.** Hors périmètre par décision, pas par oubli.
 - **Les états de survol et les transitions.** Aucune animation dans ce projet.
 - **`/newest`, `/ask`, `/show`, `/jobs`, `/front`.** Même DOM supposé que `/news`, non vérifié.
