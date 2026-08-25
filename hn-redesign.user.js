@@ -719,6 +719,16 @@ function poseTheme(nom) {
   if (lienTheme) lienTheme.textContent = nom;
 }
 
+/* La premiere ligne de #hnmain — la barre. Le chemin complet passe par
+   tbody, que les navigateurs inserent d'office pendant le parsing de
+   <table> ; linkedom, qui fait tourner ce fichier sous test/harness.mjs, ne
+   l'insere pas, et le selecteur ne matcherait jamais sous le harnais. D'ou
+   le repli, borne au meme sous-arbre. Un seul endroit le sait : deux copies
+   divergeraient en silence, et test/lint.mjs ne voit pas ce genre de derive. */
+const barreDeTete = () =>
+  document.querySelector('#hnmain > tbody > tr:first-child > td') ||
+  document.querySelector('#hnmain > tr:first-child > td');
+
 /* ------------------------------------------------- la coquille : sidebar
    Le PREMIER noeud que ce script insere hors de #hnmain. Jusqu'ici la
    protection des formulaires etait structurelle : tout vivait sous #hnmain,
@@ -733,11 +743,7 @@ function sidebar() {
      projet et ne cede pas 220px de largeur. */
   if (document.querySelector('#hnmain table.fatitem')) return;
 
-  /* Un vrai navigateur insere <tbody> implicitement pendant le parsing de
-     <table> ; linkedom, qui fait tourner ce fichier sous test/harness.mjs,
-     ne le fait pas. Les deux chemins visent le meme noeud selon le moteur. */
-  const barre = document.querySelector('#hnmain > tbody > tr:first-child > td')
-    || document.querySelector('#hnmain > tr:first-child > td');
+  const barre = barreDeTete();
   if (!barre) return;
 
   const side = document.createElement('nav');
@@ -841,10 +847,7 @@ function sidebar() {
    fabrique dupliquerait une fonction existante, et le zero requete reseau
    tient parce qu'un action de formulaire n'est qu'une cible de navigation. */
 function entete() {
-  /* Meme piege que sidebar() : linkedom n'insere pas <tbody> implicitement,
-     un vrai navigateur si. Les deux chemins visent le meme noeud. */
-  const barre = document.querySelector('#hnmain > tbody > tr:first-child > td')
-    || document.querySelector('#hnmain > tr:first-child > td');
+  const barre = barreDeTete();
   if (!barre) return;
   addClass(barre, '__entete');
 
