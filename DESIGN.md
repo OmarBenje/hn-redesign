@@ -203,7 +203,7 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | `liste-clair.png` · `liste-sombre.png` | La liste, système complet |
 | `fil-clair.png` · `fil-sombre.png` | Un fil de 206 commentaires |
 | `rampe-cran-froid.png` | Le cran `cDD` sur un commentaire réellement downvoté |
-| `*.html` | Les pages rendues, rejouables |
+| `capture.sh` | Recapture les fixtures depuis HN. Les pages ne sont pas versionnees : ce sont des ecrits d'autres personnes. |
 
 ## Decisions Log
 

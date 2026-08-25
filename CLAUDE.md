@@ -2,7 +2,7 @@
 
 Un userscript qui redessine Hacker News dans Safari sur macOS. Exécuté par [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT). Un seul utilisateur.
 
-**Le plan complet vit dans** `~/.gstack/projects/2ndbrain/omarbenjelloun-main-design-20260824-hn-safari-redesign.md` — 22 tâches, revues eng et design passées, verdict CLEARED.
+**Le plan complet vit hors du dépôt**, dans les artefacts gstack locaux : 22 tâches, revues eng et design passées, verdict CLEARED.
 
 ## Design System
 
