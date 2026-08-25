@@ -1,6 +1,6 @@
 {
   "name": "hn-redesign",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Userscript qui redessine Hacker News dans Safari. Voir README.md.",
   "main": "hn-redesign.user.js",
   "directories": {

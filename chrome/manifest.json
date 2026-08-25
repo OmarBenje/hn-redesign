@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "hn-redesign",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Redessine Hacker News : typographie lisible, densite conservee, Thread Spine, navigation clavier.",
   "content_scripts": [
     {

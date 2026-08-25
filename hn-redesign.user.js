@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         hn-redesign
 // @namespace    hn-redesign
-// @version      1.0.0
+// @version      2.0.0
 // @description  Redessine Hacker News. Voir DESIGN.md pour chaque valeur.
 // @match        https://news.ycombinator.com/*
 // @run-at       document-end
