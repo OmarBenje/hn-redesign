@@ -15,7 +15,7 @@ Les polices, couleurs, espacements et la direction esthétique y sont définis, 
 Ne pas en dévier sans accord explicite d'Omar.
 En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
-## Les dix choses qui cassent ce projet si on les oublie
+## Les onze choses qui cassent ce projet si on les oublie
 
 1. **Les deux signaux de couleur de HN.** (a) La rampe de downvote sur les commentaires : `.commtext.c00` → `.cDD`. Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. (b) `a:visited { color:#828282 }` sur la liste : HN grise les titres déjà lus, et `#hnmain a { color: ... }` l'écrase. Les deux se cassent de la même façon — une règle de couleur trop large. Voir `DESIGN.md` § Color.
 
@@ -25,9 +25,9 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
 4. **Styler le conteneur ne suffit pas — `news.css` déclare `font-family` sur neuf sélecteurs à l'intérieur de `#hnmain`** : `body`, `td`, `.default`, `.admin`, `.title`, `.subtext td`, `.comhead`, `.comment`, `input`. Une **déclaration directe bat toujours une valeur héritée**, quelle que soit la spécificité. Symptôme observé : le `td` était bien en SF et `.commtext` restait en Verdana, parce que `.comment` (news.css:21) le déclarait au-dessus. D'où le sélecteur universel `#hnmain *:not(input):not(textarea):not(select)` — les contrôles de formulaire sont exclus, HN met la zone de réponse en monospace délibérément.
 
-5. **`.athing.submission` existe sur les deux pages ; `.fatitem` n'existe que sur `/item`.** Sur `/news`, les 30 lignes sont des `tr.athing.submission`. Un sélecteur de titre de post qui passe par `.athing.submission` frappe donc les 30 titres de la liste — vérifié : ils passaient tous à 21 px. Le discriminant est `table.fatitem` (1 sur `/item`, 0 sur `/news`).
+5. **`.athing.submission` existe sur les deux pages ; `.fatitem` n'existe que sur `/item`.** Sur `/news`, les 30 lignes sont des `tr.athing.submission`, transformées en cartes par `cartes()` (avant la coquille app : `fusionner()`). Un sélecteur de titre de post qui passe par `.athing.submission` frappe donc les 30 titres de la liste — vérifié : ils passaient tous à 21 px. Le discriminant est `table.fatitem` (1 sur `/item`, 0 sur `/news`).
 
-6. **Les posts d'emploi n'ont pas de `span.subline`.** Leur `td.subtext` porte l'âge et `hide` en enfants directs. Tout code qui lit `.subline` doit se replier sur `td.subtext`, sinon un post sur trente reste non traité — visible immédiatement : il garde sa hauteur native et sa ligne de métadonnée. Corollaire : sur ces posts, le seul `a[href^="item?id="]` est celui de **l'âge**, pas un lien de commentaires. Le prendre pour tel affiche l'âge deux fois.
+6. **Les posts d'emploi n'ont pas de `span.subline`.** Leur `td.subtext` porte l'âge et `hide` en enfants directs. Tout code qui lit `.subline` doit se replier sur `td.subtext`, sinon un post sur trente reste non traité — visible immédiatement : sa carte garde une hauteur différente des 29 autres (la classe posée par `cartes()` est `__card`, pas `__row`). Corollaire : sur ces posts, le seul `a[href^="item?id="]` est celui de **l'âge**, pas un lien de commentaires. Le prendre pour tel affiche l'âge deux fois.
 
 7. **Toute mutation du DOM doit s'enregistrer dans la pile d'annulation.** Depuis la phase 3, le script insère des nœuds, pose des classes, écrit des `style` inline et retire des nœuds texte. Retirer la classe racine n'annule rien de tout ça. Passer par `addClass` / `setStyle` / `insere` / `detache` n'est pas une commodité : c'est ce qui fait tenir l'échec fermé. Et `setStyle` sauvegarde l'**attribut `style` brut**, pas la propriété — le CSSOM re-sérialise, et la comparaison de réversibilité échoue sur des espaces.
 
@@ -36,6 +36,10 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 9. **Le fichier est evalue dans la portee globale de la PAGE.** Userscript `@grant none` et content script `world: MAIN`, meme modele. Sans l'IIFE, une trentaine d'identifiants — `ROOT`, `apply`, `collapse` — atterrissent sur le global de HN. Et si le fichier est evalue deux fois dans le meme document, le second `const ROOT` jette `Identifier has already been declared` et **tout s'arrete** : c'est exactement ce qui est arrive au premier chargement de l'extension Chrome. Le garde-fou `if (window.hnRedesign) return;` rend la double injection inoffensive.
 
 10. **La vraie page a une CSP ; les fixtures non.** HN sert `img-src 'self' https://account.ycombinator.com`. C'est ce qui a tue le favicon de domaine, retire depuis : il ne s'affichait jamais en production, dans aucun des deux navigateurs. Un fichier `file://` ne porte aucun en-tete, donc **aucune fixture ne peut montrer ca**. Regle generale : ce qui depend d'un en-tete de reponse ne se teste pas sur une fixture locale — et le projet est desormais a **zero requete reseau**, ce qui est le plus simple moyen de ne plus jamais rencontrer le probleme.
+
+11. **La sidebar est le premier noeud insere hors de `#hnmain`.** Jusqu'a la coquille app, la protection de `/login`, `/submit` et `/reply` etait **structurelle** : tout le CSS vivait sous `#hnmain`, absent de ces trois pages, et le JS ne posait la classe racine que si `#hnmain` existait. `sidebar()` insere dans `body`. Cette garantie n'est donc plus gratuite : elle repose sur le garde-fou `if (!document.querySelector('#hnmain')) return;` en tete de `sidebar()`. Le retirer poserait une barre de navigation sur le formulaire de connexion. Deux tests le gardent — un dans `test/coquille.test.js`, un dans `test/rendu.sh` sur la vraie fixture `/login`. Un second garde-fou, sur `table.fatitem`, retire la sidebar de `/item` — `#hnmain` y existe aussi, donc le premier garde-fou seul ne suffit pas a garder le fil sa pleine largeur.
+
+    **Piege connexe, deja livre une fois : `insere()` n'est pas symetrique de `detache()`.** L'undo d'`insere()` est un simple `node.remove()` — correct pour un noeud neuf ou clone, FAUX pour un noeud qu'on **relocalise**, puisqu'il ne le remet jamais a sa place d'origine. Un noeud preexistant (le logo, un lien natif de `.pagetop`, le formulaire de recherche) doit passer par `detache(node)` avant `insere(...)`, pour que son point d'origine soit sauvegarde. Livrer ce bug une fois a retire le logo de HN et sept liens natifs du document apres `revert()`.
 
 ## Contraintes de la machine
 
@@ -51,17 +55,18 @@ CLAUDE.md              ce fichier
 chrome/                l'extension MV3 — GENEREE par bin/build-chrome.sh, ne pas editer
 bin/build-chrome.sh    regenere chrome/ depuis le userscript, synchronise la version
 bin/sync-safari.sh     depose le script dans le dossier sandbox que lit Userscripts
-hn-redesign.user.js    le script — phases 2, 3 et 4 : tokens, rampe, typo, ligne fusionnee,
-                       navbar, modele d'arbre, Thread Spine, clavier, barre de position
+hn-redesign.user.js    le script — tokens, rampe, typo, modele d'arbre, Thread Spine,
+                       clavier, barre de position, et depuis la phase 6 la coquille app :
+                       sidebar, en-tete, onglets, cartes (cartes(), sidebar(), entete())
 README.md              installation, raccourcis, attribution MIT de refined-hacker-news
-test/contraste.mjs     verifie les 9 couleurs, la regularite L* et la bascule de teinte
-test/regles.mjs        21 invariants de la feuille — specificite, rampe, tokens, budget T25
-test/rendu.sh          72 assertions au rendu, dont la reversibilite du DOM a l'octet
+test/contraste.mjs     verifie les couleurs contre leur fond, la regularite L* et la bascule de teinte
+test/regles.mjs        31 invariants de la feuille — specificite, rampe, tokens, budget de coherence
+test/rendu.sh          70 assertions au rendu, dont la reversibilite du DOM a l'octet
 test/harness.mjs       charge le vrai userscript sous linkedom, hors navigateur
-test/modele.test.js    12 tests de calcul pur — modele, spine, repli, frontiere
-test/lint.mjs          budget de coherence T25, verifie par mutation
+test/modele.test.js    tests de calcul pur — modele, spine, repli, frontiere
+test/coquille.test.js  tests de calcul pur sur la coquille app — garde-fous #hnmain et fatitem compris
+test/lint.mjs          budget de coherence (9 budgets : rayons, ombre, tokens, couleurs en dur…), verifie par mutation
 design-refs/           captures de reference + capture.sh
-test/                  node --test + linkedom (a creer, T10)
 ```
 
 **Le CSS vit dans le `.user.js`, en template literal.** Un seul fichier, `@grant none`, aucun format non verifie : Userscripts supporte peut-etre les `.user.css`, mais tant que T1 n'a pas tourne, on ne parie pas dessus.
@@ -70,19 +75,19 @@ test/                  node --test + linkedom (a creer, T10)
 
 ## Tests
 
-`node test/contraste.mjs` — les 9 couleurs contre leur fond dans les deux themes, la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
+`node test/contraste.mjs` — les couleurs contre leur fond dans les deux themes (`--surface-1`, plus le fond depuis la coquille app), la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
 
-`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, rails de profondeur, clavier, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 72 assertions.
+`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, rails de profondeur, clavier, sidebar et coquille, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 70 assertions.
 
 > Attention en ecrivant une assertion : **`getComputedStyle` rend une vue VIVANTE.** Lire une propriete apres avoir change l'etat rend l'etat d'apres, pas celui de la mesure. Figer en chaines tout de suite. Un marqueur parfaitement fonctionnel s'est mesure a `auto x auto` pour cette raison. Prerequis : `./design-refs/capture.sh ./design-refs/fixtures`. Moteur : Chromium headless via `browse`. **Ce n'est pas Safari.**
 
-`node test/regles.mjs` — les invariants que le rendu **ne peut pas** verifier. Le cas qui justifie ce fichier : `a:visited`. Aucun navigateur ne dit la verite sur une regle `:visited` via `getComputedStyle` — ils mentent tous, deliberement, contre le history sniffing. On ne peut donc pas tester au rendu que les titres deja lus restent gris ; on prouve que la regle existe et qu'elle **gagne en specificite**. Le fichier verifie aussi la parite des tokens entre les trois blocs de theme et le budget de coherence de T25.
+`node test/regles.mjs` — les invariants que le rendu **ne peut pas** verifier. Le cas qui justifie ce fichier : `a:visited`. Aucun navigateur ne dit la verite sur une regle `:visited` via `getComputedStyle` — ils mentent tous, deliberement, contre le history sniffing. On ne peut donc pas tester au rendu que les titres deja lus restent gris ; on prouve que la regle existe et qu'elle **gagne en specificite**, desormais contre le selecteur de carte `tr.__card .titleline > a`. Le fichier verifie aussi la parite des tokens entre les trois blocs de theme (22 dans le bloc clair, 16 redefinis en sombre) et le budget de coherence.
 
 > Attention en editant le CSS : il vit dans un template literal. **Un backtick dans un commentaire CSS casse le fichier.** `node --check hn-redesign.user.js` l'attrape immediatement.
 
 ## Tests unitaires
 
-`node --test test/*.test.js`, ou `npm test` pour tout enchainer. 12 tests sur le calcul pur : modele d'arbre, descente du Thread Spine, idempotence du repli, calcul de la frontiere, les trois etats.
+`node --test test/*.test.js`, ou `npm test` pour tout enchainer. 45 tests sur le calcul pur : modele d'arbre, descente du Thread Spine, idempotence du repli, calcul de la frontiere, les trois etats, et depuis la coquille app les garde-fous de `sidebar()` (`#hnmain`, `table.fatitem`).
 
 `test/harness.mjs` execute le **vrai** userscript sous linkedom — il le lit, l'appelle dans une fonction dont les parametres sont les globales du navigateur, et recupere `window.hnRedesign`. Aucune logique dupliquee. Il fournit un **simulateur de `a.togg`**, qui calcule son propre arbre depuis les attributs `indent` : un simulateur qui utiliserait `buildModel()` ne testerait plus rien. **Il reproduit HN, il ne le prouve pas** — la preuve est dans `test/rendu.sh`, avec le vrai `hn.js`.
 

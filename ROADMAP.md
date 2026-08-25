@@ -2,11 +2,14 @@
 
 > **Source de vérité unique.** Les tâches ont existé un temps dans trois formats à trois endroits — un design doc local, deux fichiers JSONL, une issue GitHub — sans que rien ne dise lequel faisait autorité. Ce fichier les réconcilie. En cas de contradiction avec un autre document, **c'est ce fichier qui gagne.**
 
-**État au 2026-08-25 : les phases 1 à 5 sont livrées et vérifiées.** Le userscript fait ~1 100 lignes, CSS compris. Quatre suites le vérifient — 12 tests unitaires, 29 invariants de feuille, 9 budgets de cohérence, 72 assertions au rendu sur 5 pages — et `#hnmain` revient identique **à l'octet** après `revert()`.
+**État au 2026-08-25 : les phases 1 à 6 sont livrées et vérifiées.** Le userscript fait ~1 670 lignes, CSS compris. Quatre suites le vérifient — **45 tests unitaires**, 31 invariants de feuille, 9 budgets de cohérence, **70 assertions au rendu** sur 5 pages — et `#hnmain` revient identique **à l'octet** après `revert()`.
 
-**T1 est franchie** : le userscript tourne dans Safari, confirmé sur la vraie page. Les 25 tâches du plan sont faites.
+**T1 est franchie** : le userscript tourne dans Safari, confirmé sur la vraie page. Les 25 tâches des phases 0 à 5 sont faites, et les 8 tâches de la phase 6 — la coquille app — le sont aussi (§ Phase 6 ci-dessous).
 
-**En attendant, le script tourne dans Chrome.** [`chrome/`](chrome/) est une extension MV3 dont le content script est une **copie** du userscript, en `world: "MAIN"` — donc le même modèle d'exécution qu'un userscript en `@grant none`. Vérifié sur la vraie page `news.ycombinator.com`, pas seulement sur fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes (rapport 3,27).
+**En attendant, le script tourne dans Chrome.** [`chrome/`](chrome/) est une extension MV3 dont le content script est une **copie** du userscript, en `world: "MAIN"` — donc le même modèle d'exécution qu'un userscript en `@grant none`. Vérifié sur la vraie page `news.ycombinator.com`, pas seulement sur fixtures.
+
+> [!info] Les chiffres ci-dessous datent d'avant la coquille app
+> « 30 posts à 32 px, navbar à 50 px » décrivait le design de liste dense livré en phase 3, remplacé depuis par la coquille app — voir § Phase 6. « 108 commentaires jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes » porte sur le fil de commentaires, qui n'a pas changé de comportement et reste vrai.
 
 > [!warning] Deux choses que seule la vraie page a montrées
 > **1. Le premier chargement de l'extension a échoué** sur `Uncaught SyntaxError: Identifier 'addClass' has already been declared`. Le fichier est évalué dans la portée globale de la page ; une seconde évaluation dans le même document tue tout. Le script vit désormais dans une IIFE avec un garde-fou `if (window.hnRedesign) return;` — ce qui règle aussi la fuite de ~30 identifiants dans le global de HN.
@@ -215,6 +218,53 @@ Le comptage des liens natifs de la navbar ne bouge pas : le nôtre porte la clas
 | Effort réel | ~1 h 30 |
 |---|---|
 
+---
+
+## Phase 6 — la coquille app ✅ **faite le 2026-08-25**
+
+Remplacement du design de liste dense livré en phase 3 — pas une variante. Sidebar de navigation fixe, en-tête avec recherche relocalisée, onglets Top/New/Best, colonne de cartes. Décision d'Omar ; la spec complète vit dans `docs/superpowers/specs/2026-08-25-coquille-app-design.md`.
+
+| | Tâche | État |
+|---|---|---|
+| **1** | La barre latérale — 220 px, `position: fixed`, deux groupes, sept icônes SVG inline | ✅ |
+| **2** | Deuxième garde-fou de `sidebar()` — pas de sidebar sur `/item`, `table.fatitem` | ✅ |
+| **3** | `detache()` avant `insere()` pour les nœuds relocalisés de `sidebar()` | ✅ — voir le bug ci-dessous |
+| **4** | L'en-tête — 92 px, titre de page, formulaire de recherche natif de HN relocalisé | ✅ |
+| **5** | Les onglets Top / New / Best — état actif sur `op`, repli sur `location.pathname` | ✅ |
+| **6** | La carte — `tr.athing.submission` en `display: grid` sur les trois `td` natifs | ✅ |
+| **7** | L'ombre de la carte passe par le token `--ombre`, pas par un budget de lint assoupli en douce | ✅ |
+| **8** | Palette neutre froide — 22 tokens en clair, 16 redéfinis en sombre, tous les contrastes recalculés | ✅ |
+
+**Ce qui a été mesuré :**
+
+| Fait | Valeur |
+|---|---|
+| Hauteur de carte | médiane **102 px**, 0 des 30 cartes hors tolérance ±6 px |
+| Densité de liste | **6 cartes entières** dans 1400 × 900 |
+| Sidebar | 220 px, `position: fixed` |
+| En-tête | 92 px, sur `/news` et sur `/item` |
+| Barre d'onglets | 68 px (52 px de conteneur + 16 px de marge), exactement un onglet actif ou zéro |
+| Mesure de texte du fil, profondeur 0 | 660 px (était tombée à 645 px avant le second garde-fou de colonne, voir T2 ci-dessus) |
+| Tests unitaires | 45, tous verts |
+| Assertions au rendu | 70, toutes vertes |
+| Règles CSS | 112, sur 22 tokens |
+
+**Ce qui a été perdu :** la pondération par score de titre (15,5 → 19 px selon le score, exposant 0,45). Une carte de hauteur fixe ne peut pas porter un titre qui varie de 3,5 px sans se déformer, ou sans que la métrique de densité cesse d'être vérifiable. Le titre est fixé à 17 px. C'est la **seule fonctionnalité livrée que cette phase supprime** — voir `DESIGN.md` § La liste, *Ce qui est perdu*, pour la décision complète et ce qu'il faudrait pour la rouvrir.
+
+**La densité descend de 7 (visé) à 6 (livré), et c'est un calcul, pas un bug.** En-tête 92 px + barre d'onglets 68 px + marge = 178 px de chrome avant la première carte ; 110 px par carte gouttière comprise ; `floor((900 − 178) / 110) = 6`. Chaque composant est individuellement conforme à sa spec ; le chiffre de 7 du plan initial venait d'une arithmétique qui ne comptait pas le chrome.
+
+### Un bug que seul un rendu réel a montré, deux fois
+
+| Symptôme | Cause |
+|---|---|
+| `revert()` retirait le logo de HN et sept liens natifs du document | L'undo d'`insere()` est un simple `node.remove()` — correct pour un nœud neuf ou cloné, faux pour un nœud **relocalisé** : il ne le remet jamais à sa place d'origine. Corrigé en passant par `detache(node)` avant `insere(...)` pour tout nœud préexistant que `sidebar()` ou `entete()` déplacent. |
+| Le fil de `/item` se mesurait à 645 px au lieu de 660 px | `.hn-side center { margin-left: 220px }` s'appliquait dès que la classe racine était posée, pas seulement quand la sidebar existait réellement. `/item` a `#hnmain` mais pas de sidebar (le fil ne cède pas 220 px) — d'où un deuxième garde-fou explicite, la classe `hn-side`, posée seulement quand `sidebar()` a effectivement rendu quelque chose. |
+
+Aucun des deux n'était visible dans le code lu seul : le premier ne casse rien qu'on puisse voir sans appeler `revert()` sur une vraie page ; le second est une classe CSS mal conditionnée, syntaxiquement correcte.
+
+| Effort réel | ~3 h |
+|---|---|
+
 ## Ce que les tests ne couvriront jamais
 
 Écrit ici pour que personne ne s'y trompe, y compris moi dans six mois.
@@ -246,19 +296,21 @@ Phase 2   fondations                ~2 h 10    fait
 Phase 3   la liste                  ~2 h 15    fait
 Phase 4   le fil                    ~5 h 10    fait
 Phase 5   vérification              ~3 h 10    fait
+Phase 6   la coquille app           ~3 h       fait
 ─────────────────────────────────────────────────────
-                                    ~13 h 55 en humain
+                                    ~16 h 55 en humain
 ```
 
-**Les 25 tâches sont faites.** Le projet tourne dans Safari via Userscripts, et dans Chrome via `chrome/`.
+**Les 25 tâches des phases 0 à 5 sont faites, et les 8 tâches de la phase 6 aussi.** Le projet tourne dans Safari via Userscripts, et dans Chrome via `chrome/`.
 
-Ordre imposé : **0 → 1 → 2 → (3 ‖ 4) → 5**. Les phases 3 et 4 touchent des fichiers différents et peuvent avancer en parallèle une fois les fondations posées.
+Ordre imposé : **0 → 1 → 2 → (3 ‖ 4) → 5 → 6**. Les phases 3 et 4 touchent des fichiers différents et peuvent avancer en parallèle une fois les fondations posées ; la phase 6 remplace ce que la phase 3 avait livré pour la liste, elle ne pouvait donc pas avancer avant elle.
 
 ---
 
 ## Où vit le reste
 
 - **[`DESIGN.md`](DESIGN.md)** — le système de design. Chaque valeur mesurée, chaque contraste calculé, avec les captures qui le prouvent.
-- **[`CLAUDE.md`](CLAUDE.md)** — les trois choses qui cassent le projet si on les oublie.
+- **[`CLAUDE.md`](CLAUDE.md)** — les onze choses qui cassent le projet si on les oublie.
 - **[Issue #1](https://github.com/OmarBenje/hn-redesign/issues/1)** — la spec détaillée des phases 1, 3 et 5, avec sélecteurs, fixtures et 14 critères d'acceptation.
+- **`docs/superpowers/specs/2026-08-25-coquille-app-design.md`** — la spec de la phase 6, avec les 14 critères d'acceptation de la coquille app.
 - **`design-refs/`** — les captures. `capture.sh` reconstruit les fixtures depuis HN ; elles ne sont pas versionnées, ce sont les écrits d'autres personnes.

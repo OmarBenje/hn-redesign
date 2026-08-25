@@ -2,7 +2,7 @@
 
 Un userscript qui redessine Hacker News dans Safari sur macOS. Un seul utilisateur, aucune ambition de distribution.
 
-Le principe directeur est **« enfin je peux lire HN »** : typographie et contraste d'abord, densité conservée, aucune décoration. Le Thread Spine — replier un fil de 91 commentaires sur sa branche dominante — est une fonctionnalité du produit, pas la thèse du design.
+Le principe directeur est **« enfin je peux lire HN »** : typographie et contraste d'abord, densité surveillée, décoration minimale. Sur `/news`, `/newest` et `/best`, le script ajoute une coquille d'application — une sidebar de navigation fixe à gauche, un en-tête avec le titre et la recherche native de HN relocalisée, une barre d'onglets Top/New/Best — et transforme chaque post en carte. `/item` n'a pas de sidebar : le fil de commentaires reste l'écran central du projet et ne cède pas 220 px de largeur. Le Thread Spine — replier un fil de 91 commentaires sur sa branche dominante — est une fonctionnalité du produit, pas la thèse du design.
 
 ## Installation
 
@@ -16,7 +16,7 @@ Le principe directeur est **« enfin je peux lire HN »** : typographie et contr
 
 Le content script tourne en `world: "MAIN"`, c'est-à-dire dans le contexte de la page, exactement comme un userscript en `@grant none`. Ce qui est vérifié dans Chrome est donc ce qui tournera dans Safari. C'est aussi pour ça que tout le fichier vit dans une IIFE : sans elle, une trentaine d'identifiants atterrissent sur le global de HN.
 
-**Vérifié sur la vraie page**, pas seulement sur des fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires modélisés jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes.
+**Vérifié sur la vraie page**, pas seulement sur des fixtures : sidebar à 220 px, en-tête à 92 px, cartes à 102 px de hauteur médiane, 108 commentaires modélisés jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes.
 
 ### Safari — vérifié le 2026-08-25
 
@@ -43,7 +43,7 @@ Vérifié : chargement, rechargement après modification externe, et survie à u
 | `Cmd`+`Entrée` | envoyer la réponse depuis la zone de texte |
 | `Cmd`+`I` | mettre la sélection en italique |
 
-Le thème se change par un lien dans la navbar, à côté de `login` : **auto → clair → sombre**. `auto` suit les réglages du système. Le choix est retenu d'une visite à l'autre.
+Le thème se change par un lien dans la sidebar (groupe secondaire) : **auto → clair → sombre**. `auto` suit les réglages du système. Le choix est retenu d'une visite à l'autre.
 
 Aucune touche n'est interceptée tant qu'un `input`, un `textarea` ou un élément `contenteditable` a le focus.
 
@@ -53,16 +53,16 @@ Aucune touche n'est interceptée tant qu'un `input`, un `textarea` ou un éléme
 npm install                                       # linkedom, seule dependance
 ./design-refs/capture.sh ./design-refs/fixtures   # recapture les pages HN
 npm test                                          # unitaires + feuille + contraste + lint
-./test/rendu.sh                                   # 72 assertions au rendu, 5 pages
+./test/rendu.sh                                   # 70 assertions au rendu, 5 pages
 ```
 
 | Suite | Ce qu'elle couvre |
 |---|---|
-| `node --test test/*.test.js` | 12 tests de calcul pur — modèle d'arbre, Thread Spine, idempotence du repli, frontière, les trois états. Exécute le **vrai** userscript sous linkedom, pas une copie. |
-| `node test/regles.mjs` | 29 invariants de la feuille que le rendu ne peut pas voir — dont `a:visited`, qu'aucun navigateur ne dit honnêtement à `getComputedStyle`. |
-| `node test/contraste.mjs` | les 9 couleurs contre leur fond, la régularité de la rampe en **L\*** et la bascule de teinte. |
+| `node --test test/*.test.js` | 45 tests de calcul pur — modèle d'arbre, Thread Spine, idempotence du repli, frontière, les trois états, garde-fous de la sidebar. Exécute le **vrai** userscript sous linkedom, pas une copie. |
+| `node test/regles.mjs` | 31 invariants de la feuille que le rendu ne peut pas voir — dont `a:visited`, qu'aucun navigateur ne dit honnêtement à `getComputedStyle`. |
+| `node test/contraste.mjs` | les couleurs contre leur fond, la régularité de la rampe en **L\*** et la bascule de teinte. |
 | `node test/lint.mjs` | 9 budgets de cohérence. Vérifié par mutation : six violations injectées, six attrapées. |
-| `./test/rendu.sh` | 72 assertions dans Chromium sur 5 pages, dont la réversibilité du DOM **à l'octet**. |
+| `./test/rendu.sh` | 70 assertions dans Chromium sur 5 pages, dont la réversibilité du DOM **à l'octet**. |
 
 **Ce qui n'est pas couvert, et ne le sera pas :** le rendu réel dans Safari. Tout ce dépôt est mesuré dans Chromium headless, où `-apple-system` résout vers une police distincte. Une suite verte ne prouve pas que Safari rend à l'identique.
 
@@ -84,9 +84,9 @@ Le texte de la licence MIT de refined-hacker-news s'applique à ces portions.
 
 | Fichier | Rôle |
 |---|---|
-| [`ROADMAP.md`](ROADMAP.md) | les 25 tâches, en 6 phases. **Fait autorité** en cas de contradiction. |
+| [`ROADMAP.md`](ROADMAP.md) | les 25 tâches des phases 0 à 5, plus les 8 de la phase 6 (coquille app), en 6 phases. **Fait autorité** en cas de contradiction. |
 | [`DESIGN.md`](DESIGN.md) | le système de design. Chaque valeur mesurée, chaque contraste calculé. |
-| [`CLAUDE.md`](CLAUDE.md) | les sept choses qui cassent ce projet si on les oublie. |
+| [`CLAUDE.md`](CLAUDE.md) | les onze choses qui cassent ce projet si on les oublie. |
 | `hn-redesign.user.js` | le script. Le CSS y vit en template literal. |
 | `chrome/` | l'extension MV3. **Générée** — ne jamais l'éditer à la main. |
 | `bin/build-chrome.sh` | régénère `chrome/` depuis le userscript et synchronise la version. |
