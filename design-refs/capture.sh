@@ -19,9 +19,13 @@ for f in "$OUT/news.html" "$OUT/item.html"; do
   perl -0pi -e 's|<head>|<head><base href="https://news.ycombinator.com/">|' "$f"
 done
 
+# grep -c compte des LIGNES, et HN sert sa page d'accueil sur 2 lignes :
+# il rapportait 1 post au lieu de 30. grep -o | wc -l compte les occurrences.
 echo "Fixtures ecrites dans $OUT :"
-echo "  news.html  $(grep -c 'class="athing submission"' "$OUT/news.html") posts"
-echo "  item.html  $(grep -c 'class="athing comtr' "$OUT/item.html") commentaires  (id $ID)"
+echo "  news.html  $(grep -o 'class="athing submission"' "$OUT/news.html" | wc -l | tr -d ' ') posts"
+echo "  item.html  $(grep -o 'class="athing comtr' "$OUT/item.html" | wc -l | tr -d ' ') commentaires  (id $ID)"
+echo "             profondeur max $(grep -o 'indent="[0-9]*"' "$OUT/item.html" | grep -o '[0-9]*' | sort -n | tail -1)"
+echo "             rampe $(grep -o 'commtext c[0-9A-Za-z]*' "$OUT/item.html" | sort | uniq -c | tr -s ' ' | tr '\n' ' ')"
 echo
 echo "Les chiffres du DESIGN.md ont ete mesures le 2026-08-25 sur un fil de 206"
 echo "commentaires (199 c00, 6 noshow, 1 coll, profondeurs 0 a 4). Un fil capture"

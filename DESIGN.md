@@ -88,8 +88,8 @@ Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est 
 |---|---|---|
 | Fond de page | `#EFEDE4` | `#121110` |
 | Fond de colonne | `#FBFAF6` | `#1A1917` |
-| Métadonnée | `#6E6B64` (5,0:1) | `#8A867C` (5,0:1) |
-| Auteur | `#4A4741` (8,3:1) | `#B0ABA0` (8,2:1) |
+| Métadonnée | `#6E6B64` (5,09:1) | `#8A867C` (4,84:1) |
+| Auteur | `#4A4741` (8,86:1) | `#B0ABA0` (7,68:1) |
 | Rail de profondeur | `#E4E0D4` | `#2E2C28` |
 | Rail de branche active | `#FF6600` | `#FF6600` |
 | **Accent texte** | **`#BF4300`** (5,00:1) | `#FF6600` (5,98:1) |
@@ -132,7 +132,20 @@ Le token `--visited` reprend volontairement la valeur du cran froid `cDD`. **Mê
 
 ### Les deux propriétés de la rampe à ne jamais casser
 
-1. **Les cinq crans sont régulièrement espacés en clarté perçue.** Écarts en clair : `+4,73 · +3,87 · +2,70 · +1,63`. Aucun sous 1,6 point. Un plancher naïf à 3:1 écrase le bas de la rampe — deux propositions concurrentes finissaient à `+0,59` et `+0,75` entre les deux derniers crans, soit deux crans visuellement identiques précisément là où le signal social compte le plus. Il faut **étaler la rampe entière**, pas clamper sa fin.
+1. **Les cinq crans sont régulièrement espacés en clarté perçue.** Écarts de **L\*** (CIE), la seule échelle qui approche ce que l'œil voit :
+
+| | cran 1→2 | 2→3 | 3→4 | 4→5 |
+|---|---|---|---|---|
+| clair | +12,26 | +11,81 | +12,37 | +12,29 |
+| sombre | +11,88 | +12,12 | +11,85 | +12,12 |
+
+Écart maximal à la moyenne : **0,3 point sur 12**. La rampe est quasi parfaitement uniforme.
+
+> [!warning] Correction du 2026-08-25 — ce paragraphe citait la mauvaise grandeur
+> Il annonçait des écarts de `+4,73 · +3,87 · +2,70 · +1,63` en les appelant « clarté perçue ». **Ce sont des écarts de *ratio de contraste***, pas de L\* : 15,97−11,24, 11,24−7,36, etc.
+> Le ratio de contraste n'est pas perceptuel — il s'écrase mécaniquement vers le bas de la rampe. Citer sa décroissance pour prouver une régularité **démontrait le contraire de ce qui était affirmé.** En L\*, la vraie grandeur, la régularité est là et elle est meilleure qu'annoncée.
+
+Un plancher naïf à 3:1 écrase le bas de la rampe — deux propositions concurrentes finissaient à `+0,59` et `+0,75` de ratio entre les deux derniers crans, soit deux crans visuellement identiques précisément là où le signal social compte le plus. Il faut **étaler la rampe entière**, pas clamper sa fin.
 
 2. **Le dernier cran bascule sur l'axe de teinte.** Quatre crans chauds (≈44°), le dernier froid (≈211°). Quand le canal luminance est épuisé, la teinte offre un **second canal de discrimination qui ne coûte aucune luminance**. Ce n'est pas un gain de contraste : à luminance égale le contraste est identique (`#8D9195` = 3,04:1, un gris neutre de même clarté = 3,05:1). C'est un gain de *distinguabilité*.
 

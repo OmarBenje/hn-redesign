@@ -31,7 +31,10 @@ Trois oui → supprimer `t1-spike.user.js` et attaquer la phase 2. Un seul non �
 
 **Prérequis machine :** macOS 12+ et Safari 14.1+.
 
-Rien d'autre ne commence avant que T1 réponde oui trois fois.
+> [!warning] Correction du 2026-08-25 — la porte bloquait moins que ce fichier ne disait
+> « Rien d'autre ne commence avant T1 » était trop fort. T1 tranche le **runtime**, pas les artefacts. Le CSS et le JS s'écrivent et se vérifient dans Chromium headless contre les fixtures — c'est ainsi que tous les prototypes ont été faits — et le chemin de sortie du design doc dit déjà que le même JS/CSS entre tel quel dans une Safari Web Extension le jour où Xcode tient sur le disque.
+>
+> Formulation exacte : **T1 garde l'itération dans Safari, pas l'écriture.** Si Userscripts échoue, on perd le mode de distribution, pas le code. La phase 2 a donc été faite avant T1, vérifiée sur fixtures. Ce qui reste vraiment conditionné à T1 : voir un rendu Safari, et boucler en moins d'une minute par modification.
 
 ---
 
@@ -63,15 +66,24 @@ Les trois venaient d'un comptage à l'œil sur capture. Règle retenue : **la de
 
 ---
 
-## Phase 2 — les fondations
+## Phase 2 — les fondations ✅ **faite le 2026-08-25**
 
 | | Tâche | Effort | Note |
 |---|---|---|---|
-| **T2** | Scoper toutes les règles CSS sous `#hnmain` | ~10 min | protège `/login`, `/submit`, `/reply` par construction |
-| **T3** | `try/catch` global, retrait de l'injection en cas d'erreur | ~20 min | échec fermé : HN reste utilisable si le script casse |
-| **T13** | Bloc de **16** tokens CSS : `:root`, `@media (prefers-color-scheme: dark)`, classe de surcharge | ~40 min | ⚠️ le doc d'origine disait 14 — `--radius` et `--visited` se sont ajoutés |
-| **T14** | Cinq règles de rampe de downvote, plancher 3:1, deux thèmes | ~30 min | une règle unique `.commtext{color}` détruirait le signal |
-| **T15** | ~~Charter pour le corps~~ → **SF via `-apple-system`**, corps 15/22 | ~30 min | ⚠️ **réécrite.** Charter a été rendue puis rejetée. Voir `DESIGN.md` § Typography |
+| **T2** | Scoper toutes les règles CSS sous `#hnmain` | ~10 min | ✅ vérifié sur la vraie `/login` : 0 classe, 0 feuille, 7 `input` intacts |
+| **T3** | `try/catch` global, retrait de l'injection en cas d'erreur | ~20 min | ✅ `revert()` remet HN au pixel — fond `#f6f6ef`, corps 12 px, noir |
+| **T13** | Bloc de **16** tokens CSS : `:root`, `@media (prefers-color-scheme: dark)`, classe de surcharge | ~40 min | ✅ 16 tokens, `hn-dark` / `hn-light` gagnent sur la media query |
+| **T14** | Cinq règles de rampe de downvote, plancher 3:1, deux thèmes | ~30 min | ✅ 5 crans distincts au rendu ; `test/contraste.mjs` passe |
+| **T15** | ~~Charter pour le corps~~ → **SF via `-apple-system`**, corps 15/22 | ~30 min | ✅ `15px/22px`, famille `-apple-system` |
+
+### Deux bugs trouvés au rendu, pas à la relecture
+
+| Symptôme | Cause |
+|---|---|
+| Le corps restait en Verdana alors que le `td` parent était en SF | `news.css:21` déclare `font-family` sur `.comment`. **Une déclaration directe bat une valeur héritée**, quelle que soit la spécificité. HN en déclare sur **neuf** sélecteurs dans `#hnmain`. |
+| Les 30 titres de `/news` passaient à 21 px | `.athing.submission` existe sur les deux pages. Le discriminant de `/item` est `table.fatitem` — 1 sur `/item`, 0 sur `/news`. Sans ça, la pondération par score de la phase 3 n'aurait plus rien eu à pondérer. |
+
+Les deux sont écrits dans `CLAUDE.md`, pièges 4 et 5.
 
 ---
 
