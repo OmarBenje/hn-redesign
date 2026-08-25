@@ -253,58 +253,53 @@ const CSS = `
    est derriere toi, rejete par la communaute ou deja lu par toi. */
 .${ROOT} #hnmain .titleline > a:visited { color: var(--visited); }
 
-/* ------------------------------------------------------------- navbar T24
-   Le bandeau natif est un <td bgcolor="#ff6600"> qui contient une table
-   imbriquee de trois cellules. Viser td:first-child depuis #hnmain touche la
-   BARRE, pas ses cellules — c'est l'erreur qui colle le logo a gauche et fait
-   flotter la navigation au centre. D'ou le chemin complet.
+/* ----------------------------------------------------- la coquille : sidebar
+   position: fixed plutot qu'un flex sur body. Le flex creerait un conteneur
+   de defilement neuf ; le fixed laisse le defilement a HN, et l'annulation
+   est une propriete a retirer plus un noeud a detacher.
 
-   box-sizing: border-box n'est pas decoratif : en content-box, 46px de
-   contenu plus 4px de bordures rendent 51px, et le critere de hauteur echoue
-   sur une barre pourtant juste. */
-.${ROOT} #hnmain > tbody > tr:first-child > td {
-  background: var(--surface-1);
-  border-top: 3px solid var(--accent);
-  /* --line et non --rail : ce trait separe la navbar du contenu, une
-     frontiere entre deux zones de l'interface — pas une profondeur d'arbre,
-     ou --rail reste reserve. */
-  border-bottom: 1px solid var(--line);
-  box-sizing: border-box;
-  height: 50px;
-  padding: 0;
+   C'est le SEUL bloc de la feuille qui vit hors de #hnmain, avec le fond de
+   page. test/regles.mjs le sait et le verifie nommement. */
+.${ROOT} .__side {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+  box-sizing: border-box; padding: 20px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--page); border-right: 1px solid var(--line);
+  font-size: 14px; line-height: 20px;
 }
-.${ROOT} #hnmain > tbody > tr:first-child > td > table { width: 100%; height: 46px; }
-.${ROOT} #hnmain > tbody > tr:first-child > td > table td { vertical-align: middle; padding: 0; }
-.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(1) {
-  width: 1px; white-space: nowrap; padding-left: 48px; padding-right: 14px;
-}
-.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(2) { width: 100%; text-align: left; }
-.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(3) {
-  width: 1px; white-space: nowrap; padding-right: 48px; text-align: right;
-}
-/* Les width/height=18 du logo sont des attributs de presentation : le CSS les
-   bat. Le border:1px white solid, lui, est en style inline — c'est le JS qui
-   l'annule (setStyle, donc reversible). */
-.${ROOT} #hnmain > tbody > tr:first-child > td > table td:nth-child(1) img {
-  width: 20px; height: 20px; border-radius: var(--radius-md);
-}
-/* Pas de letter-spacing negatif ici : 13px est sous le palier de 17px.
-   L'issue #1 § C ecrivait -.002em, anterieur a l'amendement A1. */
-.${ROOT} #hnmain .pagetop {
-  display: flex; align-items: baseline; gap: 20px;
-  font-size: 13px; line-height: 16px; letter-spacing: 0; color: var(--meta);
-}
-.${ROOT} #hnmain .pagetop a { color: var(--meta); }
-.${ROOT} #hnmain .pagetop .hnname { font-size: 14px; font-weight: 600; }
-.${ROOT} #hnmain .pagetop .hnname a { color: var(--text); }
-/* La page active. Jamais sur /news : il n'y a la aucun item a marquer, et
-   pointer a[href="news"] reviendrait a souligner le nom du site. */
-.${ROOT} #hnmain .pagetop a.__on { color: var(--accent-text); }
+.${ROOT} center { margin-left: 220px; }
 
-/* T22 — l'interrupteur de theme. Un lien de plus dans la navbar, qui affiche
-   l'etat courant plutot que l'action : « auto » dit ou on en est, « passer en
-   sombre » dirait ou on va et laisserait ignorer d'ou on part. */
-.${ROOT} #hnmain a.__theme { color: var(--meta); }
+.${ROOT} .__side .__logo {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; margin: 0 8px 20px;
+  background: var(--accent); border-radius: var(--radius-md);
+}
+.${ROOT} .__side .__logo img { width: 22px; height: 22px; }
+
+.${ROOT} .__side .__nav-1 { display: flex; flex-direction: column; gap: 2px; }
+.${ROOT} .__side .__nav-1 a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: var(--radius-md);
+  color: var(--author); font-size: 14px; font-weight: 500;
+}
+.${ROOT} .__side .__nav-1 a svg { width: 18px; height: 18px; flex: none; }
+.${ROOT} .__side .__nav-1 a.__on { background: var(--surface-2); color: var(--accent-text); }
+
+/* Le second groupe : les six liens natifs relocalises. Plus discrets, sans
+   icone — ce sont des destinations, pas des sections. */
+.${ROOT} .__side .__nav-2 {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line);
+}
+.${ROOT} .__side .__nav-2 a { padding: 5px 12px; color: var(--meta); font-size: 13px; }
+/* Le lien natif « newest » est deja represente par Explore. Il reste dans le
+   document — sinon un href disparaitrait — mais hors de la vue. */
+.${ROOT} .__side .__nav-2 a.__range { position: absolute; opacity: 0; pointer-events: none; }
+
+.${ROOT} .__side a.__theme {
+  margin-top: auto; padding: 8px 12px;
+  color: var(--meta); font-size: 12px;
+}
 
 /* ------------------------------------------------------------ la liste T23
    Ligne fusionnee. La .subline n'est pas reecrite : ses noeuds utiles sont
@@ -608,6 +603,49 @@ const cloneSansId = el => {
   return c;
 };
 
+/* ---------------------------------------------------------- les icones
+   Sept traces, construits en JS. Pas de police d'icones (une requete
+   reseau, et le projet est a zero), pas de <img> (la CSP de HN sert
+   img-src 'self' — c'est ce qui a tue le favicon de domaine).
+
+   currentColor sur le stroke n'est pas un detail : c'est ce qui fait suivre
+   le theme et l'etat actif sans une seule regle de couleur supplementaire. */
+const TRACES = {
+  home:     'M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5',
+  compass:  'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM15.5 8.5l-2 5-5 2 2-5 5-2Z',
+  bookmark: 'M6.5 3.5h11v17l-5.5-4-5.5 4v-17Z',
+  user:     'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20.5c1.5-3.5 4.2-5.5 7.5-5.5s6 2 7.5 5.5',
+  search:   'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM16.2 16.2 21 21',
+  fleche:   'M12 19V5M6 11l6-6 6 6',
+  bulle:    'M4.5 5.5h15v11h-8l-4.5 3.5v-3.5h-2.5v-11Z',
+};
+
+function icone(nom) {
+  const d = TRACES[nom];
+  if (!d) throw new Error(`[hn-redesign] icone inconnue : ${nom}`);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.5');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', d);
+  svg.appendChild(p);
+  return svg;
+}
+
+/* Le pseudo, lu dans le DOM. HN sert <a id="me"> en haut a droite quand la
+   session est ouverte, et rien du tout sinon. Zero requete, zero reglage :
+   c'est ce qui rend Bookmarks et Profile possibles. */
+const utilisateur = () => {
+  const me = document.querySelector('#me');
+  return me ? me.textContent.trim() : null;
+};
+
 /* ---------------------------------------------------------- T22 le theme
    Trois etats et non deux. « auto » n'est pas un defaut paresseux : c'est le
    seul qui suit l'heure de la journee, et c'est celui qu'on veut la plupart du
@@ -637,41 +675,98 @@ function poseTheme(nom) {
   if (lienTheme) lienTheme.textContent = nom;
 }
 
-/* ------------------------------------------------------------- navbar T24 */
-function navbar() {
-  const barre = document.querySelector('#hnmain > tbody > tr:first-child > td');
+/* ------------------------------------------------- la coquille : sidebar
+   Le PREMIER noeud que ce script insere hors de #hnmain. Jusqu'ici la
+   protection des formulaires etait structurelle : tout vivait sous #hnmain,
+   absent de /login, /submit et /reply. Cette garantie cesse d'etre gratuite
+   ici — d'ou le garde-fou explicite en tete de fonction. Ne pas le retirer. */
+function sidebar() {
+  if (!document.querySelector('#hnmain')) return;
+
+  /* Un vrai navigateur insere <tbody> implicitement pendant le parsing de
+     <table> ; linkedom, qui fait tourner ce fichier sous test/harness.mjs,
+     ne le fait pas. Les deux chemins visent le meme noeud selon le moteur. */
+  const barre = document.querySelector('#hnmain > tbody > tr:first-child > td')
+    || document.querySelector('#hnmain > tr:first-child > td');
   if (!barre) return;
 
-  const logo = barre.querySelector('img');
-  if (logo) setStyle(logo, 'border', 'none');
+  const side = document.createElement('nav');
+  side.className = '__side';
 
-  /* Les separateurs sont des noeuds texte litteraux « | ». Aucune regle CSS
-     ne les atteint : il faut les retirer du DOM. Le flex gap les remplace. */
+  /* Le logo. Deplace depuis la navbar, pas clone : il n'y en a qu'un. */
+  const logo = barre.querySelector('img');
+  if (logo) {
+    const boite = document.createElement('a');
+    boite.className = '__logo';
+    boite.href = 'news';
+    setStyle(logo, 'border', 'none');
+    insere(boite, logo, null);
+    side.appendChild(boite);
+  }
+
+  const pseudo = utilisateur();
+  const groupe1 = document.createElement('div');
+  groupe1.className = '__nav-1';
+
+  const ENTREES = [
+    ['home',     'Home',      'news',      true],
+    ['compass',  'Explore',   'newest',    true],
+    ['bookmark', 'Bookmarks', pseudo && `favorites?id=${pseudo}`, !!pseudo],
+    ['user',     'Profile',   pseudo && `user?id=${pseudo}`,      !!pseudo],
+  ];
+  const op = document.documentElement.getAttribute('op');
+  for (const [ic, libelle, href, actif] of ENTREES) {
+    if (!actif) continue;
+    const a = document.createElement('a');
+    a.href = href;
+    a.appendChild(icone(ic));
+    a.appendChild(document.createTextNode(libelle));
+    if ((href === 'news' && op === 'news') || (href === 'newest' && op === 'newest')) a.className = '__on';
+    groupe1.appendChild(a);
+  }
+  side.appendChild(groupe1);
+
+  /* Les six liens natifs que la maquette ne montre pas. DEPLACES, jamais
+     clones : la premisse 3 du systeme dit que le HTML fonctionnel reste
+     ATTEIGNABLE, et la presentation a le droit de le relocaliser. Les cloner
+     doublerait chaque href et le test de conservation le verrait. */
+  const groupe2 = document.createElement('div');
+  groupe2.className = '__nav-2';
+  for (const href of ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']) {
+    const a = barre.querySelector(`.pagetop a[href="${href}"]`);
+    if (a) { insere(groupe2, a, null); }
+  }
+  side.appendChild(groupe2);
+
+  /* Explore pointe vers newest, dont le lien natif vit dans .pagetop. Il est
+     deplace hors ecran plutot que supprime : le supprimer perdrait un href. */
+  const natifNewest = barre.querySelector('.pagetop a[href="newest"]');
+  if (natifNewest) { addClass(natifNewest, '__range'); insere(groupe2, natifNewest, null); }
+
+  /* T22 — l'interrupteur, en pied de sidebar. Il affiche l'ETAT courant et
+     non l'action : « auto » dit ou on en est. */
+  lienTheme = document.createElement('a');
+  lienTheme.className = '__theme';
+  lienTheme.href = 'javascript:void(0)';
+  lienTheme.textContent = litTheme();
+  lienTheme.addEventListener('click', () => {
+    poseTheme(THEMES[(THEMES.indexOf(litTheme()) + 1) % THEMES.length]);
+  });
+  side.appendChild(lienTheme);
+  undo.push(() => { lienTheme = null; });
+
+  /* Le decalage de la colonne vit dans la feuille, pas en style inline : une
+     regle sous .${ROOT} disparait avec la classe racine, donc revert() n'a
+     rien a defaire. Un setStyle ici ferait le meme travail deux fois. */
+  insere(document.body, side, document.body.firstChild);
+
+  /* Les separateurs « | » de .pagetop sont des noeuds texte litteraux : aucune
+     regle CSS ne les atteint, il faut les retirer du DOM. */
   barre.querySelectorAll('.pagetop').forEach(p => {
     [...p.childNodes]
       .filter(n => n.nodeType === 3 && n.textContent.includes('|'))
       .forEach(detache);
   });
-
-  const op = document.documentElement.getAttribute('op');
-  if (['newest', 'ask', 'show', 'jobs'].includes(op)) {
-    addClass(barre.querySelector(`.pagetop a[href="${op}"]`), '__on');
-  }
-
-  /* L'interrupteur va dans la cellule de droite, a cote de login. Le comptage
-     des liens natifs ne bouge pas : le notre porte la classe __theme. */
-  const droite = [...barre.querySelectorAll('.pagetop')].pop();
-  if (droite) {
-    lienTheme = document.createElement('a');
-    lienTheme.className = '__theme';
-    lienTheme.href = 'javascript:void(0)';
-    lienTheme.textContent = litTheme();
-    lienTheme.addEventListener('click', () => {
-      poseTheme(THEMES[(THEMES.indexOf(litTheme()) + 1) % THEMES.length]);
-    });
-    insere(droite, lienTheme, droite.firstChild);
-    undo.push(() => { lienTheme = null; });
-  }
 }
 
 /* ------------------------------------------------------------ la liste T23 */
@@ -1225,7 +1320,7 @@ function apply() {
   document.head.appendChild(style);
   document.documentElement.classList.add(ROOT);
   poseTheme(litTheme());
-  navbar();
+  sidebar();
   fusionner();
   habilleFil();
   return true;
@@ -1253,6 +1348,7 @@ window.hnRedesign = {
   get spine() { return spine; },
   buildModel, collapse, calculeSpine, frontiere,
   appliqueSpine, restaure, estReplie, estVisible,
+  icone, utilisateur, sidebar,
 };
 
 })();

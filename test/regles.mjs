@@ -75,13 +75,21 @@ ok(!/transition|animation/.test(css), '0 transition, 0 animation');
 const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()));
 ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
 
-/* 5. T2 — rien hors de #hnmain sauf le fond de page, qui est sous .hn-redesign */
+/* 5. T2 — rien hors de #hnmain sauf trois exceptions NOMMEES.
+   La sidebar est le premier noeud du projet insere hors de #hnmain : la
+   protection des formulaires cesse d'etre structurelle et devient une
+   condition a verifier. Cette liste est la moitie du controle ; l'autre est
+   le garde-fou en tete de sidebar(), teste dans test/coquille.test.js. */
+const HORS_HNMAIN_AUTORISE = /(^|,)\s*\.hn-redesign\s+(body|center|\.__side\b)/;
 const horsScope = regles.filter(r => !r.sel.includes('#hnmain') && !r.sel.startsWith('.hn-redesign'));
 ok(horsScope.length === 0, `aucune regle hors de .hn-redesign (${horsScope.map(r => r.sel).join(', ') || 'ok'})`);
-const horsHnmain = regles.filter(r => !r.sel.includes('#hnmain') && !/^\.hn-redesign(\.[\w-]+)?(:not\([^)]*\))? \{?$|^\.hn-redesign(\.[\w-]+)?$/.test(r.sel.trim()));
-ok(horsHnmain.every(r => /body/.test(r.sel)), `hors #hnmain, seul le fond de page (${horsHnmain.map(r => r.sel).join(', ') || 'aucun'})`);
+const horsHnmain = regles.filter(r => !r.sel.includes('#hnmain')
+  && !/^\.hn-redesign(\.[\w-]+)?(:not\([^)]*\))?$/.test(r.sel.trim()));
+const interdits = horsHnmain.filter(r => !HORS_HNMAIN_AUTORISE.test(r.sel));
+ok(interdits.length === 0,
+   `hors #hnmain, seuls body, center et .__side (${interdits.map(r => r.sel).join(', ') || 'aucun autre'})`);
 
-/* 6. la ligne fusionnee et la navbar — T23 / T24 */
+/* 6. la ligne fusionnee et la coquille — T23 / T24 */
 const aRegle = re => regles.some(r => re.test(r.sel));
 ok(aRegle(/tr\.__row \+ tr$/) && /tr\.__row \+ tr\s*\{[^}]*display:\s*none/.test(css),
    'la ligne de metadonnee native est masquee, pas supprimee');
@@ -93,11 +101,10 @@ ok(/@media \(any-hover: hover\)/.test(css),
    'la revelation au survol est enveloppee dans @media (any-hover: hover)');
 ok(/tr\.__row:focus-within .__hide/.test(css),
    'hide est aussi revele au focus clavier, pas seulement au survol');
-const navbar = regles.filter(r => /tr:first-child > td/.test(r.sel));
-ok(navbar.length > 0 && navbar.every(r => /#hnmain > tbody > tr:first-child > td/.test(r.sel)),
-   `la navbar passe par le chemin complet, jamais par td:first-child (${navbar.length} regles)`);
-ok(/tr:first-child > td \{[^}]*box-sizing:\s*border-box/.test(css),
-   'box-sizing: border-box sur la barre — sans lui 46px de contenu rendent 51px');
+/* la coquille : la sidebar est fixed, jamais un flex sur body */
+ok(/\.__side \{[^}]*position:\s*fixed/.test(css.replace(/\s+/g, ' ')),
+   'la sidebar est en position fixed — un flex sur body creerait un conteneur de defilement neuf');
+ok(!/\bbody \{[^}]*display:\s*flex/.test(css), 'body ne devient pas un conteneur flex');
 /* le palier de tracking : une seule valeur negative dans toute la feuille */
 const negatifs = [...css.matchAll(/letter-spacing:\s*(-[^;]+);/g)].map(x => x[1].trim());
 ok(new Set(negatifs).size <= 1 && (negatifs[0] === undefined || negatifs[0] === '-0.012em'),
