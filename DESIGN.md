@@ -188,6 +188,13 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 **2. Favicon du domaine.** `https://www.google.com/s2/favicons?sz=32&domain=<sitestr>`, 14×14, `border-radius: 2px`. Le domaine est déjà dans le DOM sous `span.sitestr`.
 **Repli obligatoire :** 4 domaines sur 30 n'ont pas de favicon chez Google. Sans `onerror` qui pose `visibility:hidden`, l'alignement des titres devient irrégulier. Ne jamais `display:none` — l'espace doit rester réservé.
 
+> [!warning] Sur la vraie page, aucun favicon ne charge — vérifié le 2026-08-25
+> Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com`. Les 30 requêtes vers `google.com/s2/favicons` sont **bloquées par le navigateur**, dans Chrome comme dans Safari. Ce n'est pas un bug du script, et **aucune fixture locale ne pouvait le montrer** : un fichier `file://` ne porte pas d'en-tête de réponse. Il a fallu charger l'extension sur `news.ycombinator.com` pour le voir.
+>
+> **La règle « jamais `display:none` » est amendée** : elle existe pour éviter un alignement *irrégulier*. Quand **toutes** les images échouent, l'alignement est régulier de toute façon, et réserver 22 px par ligne pour une gouttière qui ne montrera jamais rien est une dette pure. Le script pose alors `__sans-fav` sur la racine et replie la gouttière. Mesuré sur la vraie page : les 30 lignes tiennent toujours exactement 32 px.
+>
+> Les récupérer demanderait de relâcher la CSP de HN via `declarativeNetRequest`. C'est une décision de sécurité, pas de design : non prise.
+
 **3. Hiérarchie de la ligne de métadonnées.** Le nombre de commentaires est **la seule chose colorée** de la ligne (`--accent-text`) : c'est là qu'on clique. Le score est en `--c2` et en gras, en chiffres tabulaires. `hide`, `past`, `favorite` restent en gris méta. L'âge reste en gris méta.
 
 **Densité livrée le 2026-08-25 : 30 posts entiers, hauteur de ligne 32 px pour les 30 lignes**, viewport 1400 × 1500, dernier post à 1376 px. Mesuré au `getBoundingClientRect`. HN natif est à 30 px de ligne pour 30 posts, mais en Verdana 10 px : le redesign atteint la densité native en typographie lisible. La valeur antérieure de 58 px et 24 posts est superseded.
@@ -388,6 +395,7 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Gouttière de favicon repliée quand tout échoue** | La CSP de HN bloque les 30 requêtes. Réserver 22 px pour du vide est une dette ; l'alignement reste régulier puisque rien ne charge. Amende la règle « jamais `display:none` », sans la contredire. |
 | 2026-08-25 | **Un trait de rail par ancêtre** | Un trait unique n'exprime que l'imbrication ; le nombre de traits exprime la profondeur. Une règle de fond remplace douze règles de largeur. |
 | 2026-08-25 | **Thème à trois états, `auto` par défaut** | `auto` suit l'heure et couvre le cas courant. Le lien affiche l'état, pas l'action. |
 | 2026-08-25 | **Score du spine : taille × √(longueur relative)** | Le `n` brut désigne la querelle la plus peuplée ; le volume de texte brut désigne le monologue. La racine carrée amortit pour qu'un commentaire long ne batte pas une discussion. Départage par ordre du document. |

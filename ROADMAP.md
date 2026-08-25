@@ -6,6 +6,13 @@
 
 **Il reste T1**, la porte, qui demande un Mac : personne n'a encore vu ce projet dans Safari.
 
+**En attendant, le script tourne dans Chrome.** [`chrome/`](chrome/) est une extension MV3 dont le content script est une **copie** du userscript, en `world: "MAIN"` — donc le même modèle d'exécution qu'un userscript en `@grant none`. Vérifié sur la vraie page `news.ycombinator.com`, pas seulement sur fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes (rapport 3,27).
+
+> [!warning] Deux choses que seule la vraie page a montrées
+> **1. Le premier chargement de l'extension a échoué** sur `Uncaught SyntaxError: Identifier 'addClass' has already been declared`. Le fichier est évalué dans la portée globale de la page ; une seconde évaluation dans le même document tue tout. Le script vit désormais dans une IIFE avec un garde-fou `if (window.hnRedesign) return;` — ce qui règle aussi la fuite de ~30 identifiants dans le global de HN.
+>
+> **2. Les favicons de domaine ne chargent pas.** HN sert `img-src 'self' https://account.ycombinator.com` : les 30 requêtes sont bloquées, dans Chrome comme dans Safari. **Aucune fixture ne pouvait le montrer** — un fichier `file://` ne porte pas d'en-tête. Le repli existant a été étendu : quand tout échoue, la gouttière est repliée.
+
 ---
 
 ## Phase 0 — la porte

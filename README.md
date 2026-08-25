@@ -6,9 +6,23 @@ Le principe directeur est **« enfin je peux lire HN »** : typographie et contr
 
 ## Installation
 
+### Chrome — marche aujourd'hui
+
+1. `chrome://extensions`, activer **Mode développeur**.
+2. **Charger l'extension non empaquetée** → choisir le dossier [`chrome/`](chrome/).
+3. Ouvrir `news.ycombinator.com`.
+
+`chrome/hn-redesign.js` est une **copie** de `hn-redesign.user.js`, régénérée par [`bin/build-chrome.sh`](bin/build-chrome.sh). Un seul fichier fait foi ; `node test/lint.mjs` échoue si la copie a dérivé.
+
+Le content script tourne en `world: "MAIN"`, c'est-à-dire dans le contexte de la page, exactement comme un userscript en `@grant none`. Ce qui est vérifié dans Chrome est donc ce qui tournera dans Safari. C'est aussi pour ça que tout le fichier vit dans une IIFE : sans elle, une trentaine d'identifiants atterrissent sur le global de HN.
+
+**Vérifié sur la vraie page**, pas seulement sur des fixtures : 30 posts à 32 px, navbar à 50 px, 108 commentaires modélisés jusqu'à la profondeur 8, Thread Spine 108 → 33 lignes.
+
+### Safari — quand tu es devant ton Mac
+
 Le runtime est [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT), depuis l'App Store. Il lit **un seul dossier, sans récursion** : pointer son dossier de travail sur la racine de ce dépôt.
 
-> **T1 n'a pas encore été exécuté.** Personne n'a vérifié que Userscripts charge ce fichier, le recharge après modification et survit à un redémarrage de Safari. Le mode d'emploi du test est dans [`ROADMAP.md`](ROADMAP.md), phase 0. T1 tranche le *runtime*, pas les artefacts : tout ce qui suit a été écrit et vérifié dans Chromium headless contre des fixtures HN réelles.
+> **T1 n'a pas encore été exécuté.** Personne n'a vérifié que Userscripts charge ce fichier, le recharge après modification et survit à un redémarrage de Safari. Le mode d'emploi du test est dans [`ROADMAP.md`](ROADMAP.md), phase 0.
 
 ## Raccourcis
 
@@ -66,4 +80,14 @@ Le texte de la licence MIT de refined-hacker-news s'applique à ces portions.
 | [`DESIGN.md`](DESIGN.md) | le système de design. Chaque valeur mesurée, chaque contraste calculé. |
 | [`CLAUDE.md`](CLAUDE.md) | les sept choses qui cassent ce projet si on les oublie. |
 | `hn-redesign.user.js` | le script. Le CSS y vit en template literal. |
+| `chrome/` | l'extension MV3. **Générée** — ne jamais l'éditer à la main. |
+| `bin/build-chrome.sh` | régénère `chrome/` depuis le userscript et synchronise la version. |
 | `design-refs/` | captures de référence et `capture.sh`. Les fixtures ne sont pas versionnées : ce sont les écrits d'autres personnes. |
+
+## Le favicon de domaine ne marche pas sur la vraie page
+
+Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com`. Les 30 requêtes vers `google.com/s2/favicons` sont donc **bloquées par le navigateur**, dans Chrome comme dans Safari — ce n'est pas un bug de l'extension, et aucune fixture locale ne pouvait le montrer, puisqu'un fichier `file://` ne porte pas d'en-tête.
+
+Le repli est en place : chaque image qui échoue passe en `visibility:hidden`, et **quand elles échouent toutes**, la gouttière de 22 px est repliée plutôt que de réserver de la place pour du vide. Mesuré sur la vraie page : les 30 lignes tiennent toujours exactement 32 px.
+
+Pour les récupérer il faudrait relâcher la CSP de HN via `declarativeNetRequest`. C'est une décision de sécurité, pas une décision de design : non prise.

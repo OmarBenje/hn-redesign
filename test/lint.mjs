@@ -62,6 +62,24 @@ const inconnus = [...utilises].filter(t => !declares.has(t));
 budget('tokens declares et jamais utilises', orphelins, 0);
 budget('var() sans declaration', inconnus, 0);
 
+/* L'extension Chrome est une COPIE du userscript, pas un second fichier a
+   maintenir. Si elle derive, ce qu'on teste n'est plus ce qui tourne dans le
+   navigateur. ./bin/build-chrome.sh la reconstruit. */
+try {
+  const copie = readFileSync(new URL('../chrome/hn-redesign.js', import.meta.url), 'utf8');
+  const manifeste = JSON.parse(readFileSync(new URL('../chrome/manifest.json', import.meta.url), 'utf8'));
+  const version = (src.match(/@version\s+(\S+)/) || [])[1];
+  const memeFichier = copie === src;
+  const memeVersion = manifeste.version === version;
+  console.log(`  ${memeFichier ? 'ok  ' : 'ECHEC'} chrome/hn-redesign.js identique au userscript` +
+    (memeFichier ? ` — ${copie.length} caracteres` : ' — lancer ./bin/build-chrome.sh'));
+  if (!memeFichier) echecs.push('la copie Chrome a derive');
+  console.log(`  ${memeVersion ? 'ok  ' : 'ECHEC'} manifeste et userscript a la meme version — ${manifeste.version} / ${version}`);
+  if (!memeVersion) echecs.push('versions desynchronisees');
+} catch (err) {
+  console.log('  ok   pas d extension Chrome dans ce depot');
+}
+
 console.log(`\n  ${declares.size} tokens, ${[...css.matchAll(/\{/g)].length} regles.`);
 console.log(echecs.length ? `\n${echecs.length} DEPASSEMENT(S)\n` : '\nDans le budget.\n');
 process.exit(echecs.length ? 1 : 0);

@@ -86,9 +86,22 @@ export function charge(fichier = 'item.html', url = 'https://news.ycombinator.co
   fenetre.addEventListener = fenetre.addEventListener || (() => {});
   fenetre.removeEventListener = fenetre.removeEventListener || (() => {});
 
+  /* Le window de linkedom delegue les proprietes inconnues au globalThis de
+     Node. window.hnRedesign pose par un test precedent y survit donc, et le
+     garde-fou anti-double-injection du script — legitime dans un navigateur —
+     ferait sortir immediatement en rendant l'API du test PRECEDENT, liee a un
+     autre document. Deux tests sur trois echouaient sur cet etat fantome. */
+  delete fenetre.hnRedesign;
+  delete globalThis.hnRedesign;
+
   const fn = new Function('window', 'document', 'location', 'localStorage', 'console', 'URLSearchParams',
     SRC + '\n;return window.hnRedesign;');
   const api = fn(fenetre, document, location, localStorage, console, URLSearchParams);
+  if (!api) throw new Error('le script n a rien expose — garde-fou declenche ?');
+  if (api.modele && api.modele.liste.length &&
+      !document.contains(api.modele.liste[0].el)) {
+    throw new Error('l API renvoyee est liee a un autre document');
+  }
 
   return { api, document, window: fenetre, compteur, localStorage };
 }

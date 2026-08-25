@@ -13,7 +13,7 @@ Les polices, couleurs, espacements et la direction esthétique y sont définis, 
 Ne pas en dévier sans accord explicite d'Omar.
 En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
-## Les huit choses qui cassent ce projet si on les oublie
+## Les dix choses qui cassent ce projet si on les oublie
 
 1. **Les deux signaux de couleur de HN.** (a) La rampe de downvote sur les commentaires : `.commtext.c00` → `.cDD`. Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. (b) `a:visited { color:#828282 }` sur la liste : HN grise les titres déjà lus, et `#hnmain a { color: ... }` l'écrase. Les deux se cassent de la même façon — une règle de couleur trop large. Voir `DESIGN.md` § Color.
 
@@ -31,6 +31,10 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
 8. **Un `/*` non ferme dans le CSS avale les regles suivantes, en silence.** Le CSS vit dans un template literal : `node --check` ne le lit pas, la feuille se charge sans erreur, et douze regles d'indentation ont disparu sans que rien ne le signale — l'ecran montrait 40px la ou la feuille disait 22. `node test/regles.mjs` compte desormais les delimiteurs. C'est le meme piege que le backtick du point precedent, en pire : le backtick casse le fichier tout de suite, le commentaire non ferme ne casse rien.
 
+9. **Le fichier est evalue dans la portee globale de la PAGE.** Userscript `@grant none` et content script `world: MAIN`, meme modele. Sans l'IIFE, une trentaine d'identifiants — `ROOT`, `apply`, `collapse` — atterrissent sur le global de HN. Et si le fichier est evalue deux fois dans le meme document, le second `const ROOT` jette `Identifier has already been declared` et **tout s'arrete** : c'est exactement ce qui est arrive au premier chargement de l'extension Chrome. Le garde-fou `if (window.hnRedesign) return;` rend la double injection inoffensive.
+
+10. **La vraie page a une CSP ; les fixtures non.** HN sert `img-src 'self' https://account.ycombinator.com`, donc les favicons Google sont bloques — dans Chrome comme dans Safari. Un fichier `file://` ne porte aucun en-tete, donc **aucune fixture ne peut montrer ca**. Regle generale : ce qui depend d'un en-tete de reponse ne se teste pas sur une fixture locale.
+
 ## Contraintes de la machine
 
 - **Pas de Xcode** et ~19 Go libres. Xcode en demande ~40. Aucun plan impliquant un projet Xcode, `safari-web-extension-converter`, ou une extension Safari native n'est réalisable. Userscripts contourne tout ça.
@@ -42,6 +46,8 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 ROADMAP.md             les 25 taches, en 6 phases — source de verite du reste a faire
 DESIGN.md              le systeme de design — source de verite visuelle
 CLAUDE.md              ce fichier
+chrome/                l'extension MV3 — GENEREE par bin/build-chrome.sh, ne pas editer
+bin/build-chrome.sh    regenere chrome/ depuis le userscript, synchronise la version
 hn-redesign.user.js    le script — phases 2, 3 et 4 : tokens, rampe, typo, ligne fusionnee,
                        navbar, modele d'arbre, Thread Spine, clavier, barre de position
 README.md              installation, raccourcis, attribution MIT de refined-hacker-news
