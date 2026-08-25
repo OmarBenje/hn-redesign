@@ -72,7 +72,10 @@ ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius-sm', '--radius-md', '
 const radius = new Set([...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()));
 ok(radius.size <= 3, `<= 3 valeurs de border-radius (${[...radius].join(', ') || 'aucune'})`);
 ok(!/transition|animation/.test(css), '0 transition, 0 animation');
-const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()));
+/* "none" desactive l'ombre, elle ne s'ajoute pas au budget : la carte porte
+   UNE ombre, qui disparait en sombre via cette meme valeur "none". */
+const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim())
+  .filter(v => v !== 'none'));
 ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
 
 /* 5. T2 — rien hors de #hnmain sauf trois exceptions NOMMEES.
@@ -91,16 +94,18 @@ ok(interdits.length === 0,
 
 /* 6. la ligne fusionnee et la coquille — T23 / T24 */
 const aRegle = re => regles.some(r => re.test(r.sel));
-ok(aRegle(/tr\.__row \+ tr$/) && /tr\.__row \+ tr\s*\{[^}]*display:\s*none/.test(css),
+ok(aRegle(/tr\.__card \+ tr$/) && /tr\.__card \+ tr\s*\{[^}]*display:\s*none/.test(css),
    'la ligne de metadonnee native est masquee, pas supprimee');
-ok(/tr\.__row\s*\{[^}]*position:\s*relative/.test(css),
-   'la ligne fusionnee est le repere de positionnement de hide');
-ok(/\.__hide\s*\{[^}]*position:\s*absolute[^}]*opacity:\s*0/.test(css),
+ok(/tr\.__card\s*\{[^}]*position:\s*relative/.test(css),
+   'la carte est le repere de positionnement de hide');
+ok(/\.__hide \{[^}]*position:\s*absolute[^}]*opacity:\s*0/.test(css.replace(/\s+/g, ' ')),
    'hide est hors flux ET opacity 0 — ni display:none ni visibility, qui tuent le Tab');
 ok(/@media \(any-hover: hover\)/.test(css),
    'la revelation au survol est enveloppee dans @media (any-hover: hover)');
-ok(/tr\.__row:focus-within .__hide/.test(css),
+ok(/tr\.__card:focus-within .__hide/.test(css),
    'hide est aussi revele au focus clavier, pas seulement au survol');
+ok(/tr\.__card\s*\{[^}]*display:\s*grid/.test(css.replace(/\s+/g, ' ')),
+   'la carte est une grille — les trois td de HN tombent aux trois emplacements sans etre deplaces');
 /* la coquille : la sidebar est fixed, jamais un flex sur body */
 ok(/\.__side \{[^}]*position:\s*fixed/.test(css.replace(/\s+/g, ' ')),
    'la sidebar est en position fixed — un flex sur body creerait un conteneur de defilement neuf');

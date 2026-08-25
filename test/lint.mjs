@@ -35,7 +35,9 @@ console.log('\nbudget de coherence\n');
 budget('valeurs de border-radius', [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()), 3,
   'trois rayons et pas un de plus : sm pour les pilules de metadonnee, md pour les cartes et les onglets, full pour les pastilles');
 budget('durees de transition ou d animation', [...css.matchAll(/(?:transition|animation)[^;]*:\s*([^;]+);/g)].map(x => x[1].trim()), 0);
-budget('ombres', [...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()), 1,
+/* "none" desactive l'ombre en sombre : c'est la meme ombre qui disparait,
+   pas une seconde valeur. Elle ne compte donc pas dans le budget. */
+budget('ombres', [...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()).filter(v => v !== 'none'), 1,
   'une seule ombre dans tout le systeme, sur la carte, et elle disparait en sombre');
 budget('familles d icones', [...css.matchAll(/font-family:\s*([^;]*(?:icon|awesome|material)[^;]*);/gi)].map(x => x[1].trim()), 0);
 budget('declarations !important', [...css.matchAll(/([^;{]*!important)/g)].map(x => x[1].trim()), 0,
@@ -47,7 +49,12 @@ budget('valeurs de tracking negatif', [...css.matchAll(/letter-spacing:\s*(-[^;]
    la regle marche, le thème sombre la rate, et personne ne le voit en clair. */
 const blocsTheme = [...css.matchAll(/(?:\.hn-redesign(?::not\(\.hn-light\))?|\.hn-redesign\.hn-dark)\s*\{[^}]*\}/g)]
   .map(x => x[0]).join('\n');
-const hors = css.split('\n').filter(l => !blocsTheme.includes(l.trim()) || !/--[\w-]+:/.test(l));
+/* box-shadow est exclu : c'est deja son propre budget ci-dessus (1 ombre, qui
+   se retire en sombre via "none"). Une couleur qui n'existe qu'a l'interieur
+   de cette unique valeur n'a pas besoin d'une variante sombre a part. */
+const hors = css.split('\n')
+  .filter(l => !blocsTheme.includes(l.trim()) || !/--[\w-]+:/.test(l))
+  .filter(l => !/box-shadow\s*:/.test(l));
 const dures = [...hors.join('\n').matchAll(/(?<!-)(#[0-9a-fA-F]{3,8}\b|\brgba?\([^)]*\))/g)]
   .map(x => x[1])
   .filter(v => !blocsTheme.includes(v));

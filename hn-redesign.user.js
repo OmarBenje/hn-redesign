@@ -359,68 +359,95 @@ const CSS = `
 }
 .${ROOT} #hnmain tr.__onglets a.__on { color: var(--accent-text); border-bottom-color: var(--accent); }
 
-/* ------------------------------------------------------------ la liste T23
-   Ligne fusionnee. La .subline n'est pas reecrite : ses noeuds utiles sont
-   CLONES dans la .titleline et la seconde <tr> passe en display:none. Cloner
-   et non deplacer — les scripts de HN referencent ces noeuds. Les clones
-   perdent leur id : deux #score_<n> dans le meme document casseraient
-   getElementById. */
-.${ROOT} #hnmain tr.__row { position: relative; }
-.${ROOT} #hnmain tr.__row > td { padding: 6px 0; vertical-align: middle; }
-/* La cellule de vote fait exactement 10px — la largeur de la fleche. Sans ces
-   deux paddings, rang, fleche et titre se touchent : « 1.▲iCloud+ ». */
-.${ROOT} #hnmain tr.__row > td.title:first-child { padding-right: 8px; }
-.${ROOT} #hnmain tr.__row > td.votelinks { padding-right: 8px; }
-.${ROOT} #hnmain tr.__row + tr { display: none; }
+/* ------------------------------------------------------ la coquille : la carte
+   La tr EST la carte. Grille de deux colonnes : la gouttiere porte la pastille
+   de rang en ligne 1 et la fleche de vote en ligne 2 ; le contenu occupe les
+   deux lignes de la colonne 2. Les trois td de HN tombent pile dedans, donc
+   aucun noeud n'est deplace pour la carte elle-meme. */
+.${ROOT} #hnmain tr.__card {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  grid-template-rows: auto 1fr;
+  column-gap: 12px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+/* L'ombre ne dit rien sur un fond noir : en sombre, le filet suffit seul. */
+@media (prefers-color-scheme: dark) {
+  .${ROOT}:not(.hn-light) #hnmain tr.__card { box-shadow: none; }
+}
+.${ROOT}.hn-dark #hnmain tr.__card { box-shadow: none; }
+
+.${ROOT} #hnmain tr.__card > td.title:first-child { grid-area: 1 / 1; padding: 0; }
+.${ROOT} #hnmain tr.__card > td.votelinks { grid-area: 2 / 1; padding: 6px 0 0; }
+.${ROOT} #hnmain tr.__card > td.title:last-child { grid-area: 1 / 2 / 3 / 3; padding: 0; }
+.${ROOT} #hnmain tr.__card + tr { display: none; }
+
+/* La pastille de rang. Un aplat de 26px a droit a l'orange pur : la regle qui
+   l'interdit porte sur le TEXTE, pas sur les surfaces. */
+.${ROOT} #hnmain tr.__card .rank {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: var(--radius-full);
+  background: var(--accent); color: var(--surface-1);
+  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+
 /* Les fleches de vote. HN les sert en <div class="votearrow"> de 10x10 avec
    triangle.svg en fond : une IMAGE, donc elles ne suivaient ni les tokens ni
-   le theme, et gardaient en sombre le gris choisi pour un fond beige. Leur
-   marge 3px 2px 6px etait par ailleurs calee sur la ligne de 30px en Verdana
-   de HN, pas sur la notre.
-
-   clip-path plutot qu'un triangle en bordures : la boite garde ses 10x10, donc
-   le rotate180 que HN applique a la fleche de downvote tourne autour du bon
-   centre. Un triangle en bordures a une boite de 0x0 et se deplacerait.
-
-   L'orange au survol n'est pas une invention : c'est la convention de HN
-   lui-meme, et un aplat de 10px a droit a l'orange pur. */
+   le theme. clip-path plutot qu'un triangle en bordures : la boite garde ses
+   10x10, donc le rotate180 que HN applique a la fleche de downvote tourne
+   autour du bon centre. Un triangle en bordures a une boite de 0x0. */
 .${ROOT} #hnmain div.votearrow {
   background-image: none;
-  background-color: var(--meta);
+  background-color: var(--rail);
   clip-path: polygon(50% 12%, 100% 88%, 0 88%);
-  margin: 0;
+  margin: 0 auto;
 }
 .${ROOT} #hnmain .votelinks a:hover div.votearrow { background-color: var(--accent); }
 
-.${ROOT} #hnmain tr.__row .rank {
-  color: var(--meta); font-size: 12px; font-variant-numeric: tabular-nums;
+.${ROOT} #hnmain tr.__card .titleline { display: block; }
+.${ROOT} #hnmain tr.__card .titleline > a {
+  font-size: 17px; line-height: 24px; font-weight: 600;
+  letter-spacing: -0.012em; color: var(--text);
 }
-.${ROOT} #hnmain tr.__row .titleline { display: block; line-height: 20px; }
-/* vertical-align: middle sur TOUS les enfants de la titleline. Alignes sur la
-   ligne de base, le titre a 16,5px et le strut a 13,3px ne partagent pas la
-   meme, et le descendant du strut ajoutait 2px : la ligne mesurait 34px au
-   lieu de 32. Centres sur le strut, la boite retombe a 20px exactement, pour
-   les 30 lignes. Mesure, pas intuition. */
-.${ROOT} #hnmain tr.__row .titleline > * { vertical-align: middle; }
+/* Le gris « deja lu » de HN. Cette regle DOIT battre celle du dessus : sans
+   elle, tous les titres se ressemblent et on relit ce qu'on a deja lu.
+   Invérifiable au rendu — les navigateurs mentent sur :visited contre le
+   history sniffing — donc prouvee par specificite dans test/regles.mjs. */
+.${ROOT} #hnmain tr.__card .titleline > a:visited { color: var(--visited); }
+
+.${ROOT} #hnmain tr.__card .__site { display: block; font-size: 14px; line-height: 20px; }
+.${ROOT} #hnmain tr.__card .__site a { color: var(--accent-text); }
+
 .${ROOT} #hnmain .__m {
-  margin-left: 12px; font-size: 12px; letter-spacing: .1px;
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 6px; font-size: 13px; line-height: 18px; letter-spacing: .1px;
   color: var(--meta); white-space: nowrap;
 }
-.${ROOT} #hnmain .__m > * { margin-right: 8px; }
-/* Le nombre de commentaires est la SEULE chose coloree de la ligne : c'est la
-   qu'on clique. Le score est en c73 et gras, en chiffres tabulaires. */
-.${ROOT} #hnmain .__m .score { color: var(--c73); font-weight: 600; font-variant-numeric: tabular-nums; }
+.${ROOT} #hnmain .__m > * { display: inline-flex; align-items: center; gap: 5px; }
+.${ROOT} #hnmain .__m svg { width: 12px; height: 12px; }
+.${ROOT} #hnmain .__m .__pts { color: var(--accent-text); }
+.${ROOT} #hnmain .__m .score { font-weight: 600; font-variant-numeric: tabular-nums; }
 .${ROOT} #hnmain .__m a { color: var(--meta); }
-.${ROOT} #hnmain .__m a.__c { color: var(--accent-text); }
-/* hide : hors flux, donc zero impact sur les 32px, mais toujours atteignable
-   au Tab. Les trois techniques de masquage ont ete mesurees : display:none
+.${ROOT} #hnmain .__m .__by { color: var(--author); }
+
+/* hide : hors flux, donc zero impact sur la hauteur de carte, mais toujours
+   atteignable au Tab. Les trois techniques ont ete mesurees : display:none
    tue le Tab, visibility:hidden aussi, opacity:0 le garde mais garde la
    place — d'ou opacity:0 PLUS position:absolute. */
-.${ROOT} #hnmain .__hide { position: absolute; right: 0; opacity: 0; font-size: 12px; color: var(--meta); }
-@media (any-hover: hover) {
-  .${ROOT} #hnmain tr.__row:hover .__hide { opacity: 1; }
+.${ROOT} #hnmain .__hide {
+  position: absolute; top: 16px; right: 20px;
+  opacity: 0; font-size: 12px; color: var(--meta);
 }
-.${ROOT} #hnmain tr.__row:focus-within .__hide { opacity: 1; }
+@media (any-hover: hover) {
+  .${ROOT} #hnmain tr.__card:hover .__hide { opacity: 1; }
+}
+.${ROOT} #hnmain tr.__card:focus-within .__hide { opacity: 1; }
 
 /* --------------------------------------------------------- le fil, phase 4
    Indentation : 22px par niveau au lieu des 40 de HN. La largeur vit dans un
@@ -974,72 +1001,94 @@ function onglets() {
   insere(corps, tr, premiere.nextSibling);
 }
 
-/* ------------------------------------------------------------ la liste T23 */
-const scoreDe = tr => {
-  const s = tr.nextElementSibling && tr.nextElementSibling.querySelector('.score');
-  return s ? parseInt(s.textContent, 10) || 0 : 0;
-};
+/* ---------------------------------------------------- la coquille : la carte
+   Aucune restructuration du DOM. HN sert deja trois cellules par ligne — le
+   rang, la fleche de vote, le titre — et elles tombent exactement aux trois
+   emplacements de la maquette une fois la tr passee en grille. Seule la ligne
+   de metadonnee est clonee dans la troisieme cellule.
 
-function fusionner() {
-  /* Le garde-fou .fatitem. tr.athing.submission existe sur /news ET sur
-     /item — 30 lignes d'un cote, 1 de l'autre. Seul /item l'enveloppe dans
-     <table class="fatitem">. Sans ce filtre, fusionner() reecrirait la tete
-     d'un fil de commentaires. */
+   CLONER et non deplacer : les scripts de HN referencent ces noeuds. Les
+   clones perdent leur id — deux #score_<n> dans un meme document casseraient
+   getElementById.
+
+   Ce qui a disparu avec la phase 3 : la ponderation par score. Les titres
+   allaient de 15,5 a 19px selon le score. Trois lignes empilees dans une
+   carte de hauteur fixe ne le supportent pas — la carte se deforme, ou la
+   metrique cesse d'etre verifiable. Titre fixe a 17px. C'est la seule
+   fonctionnalite que ce chantier supprime ; voir la spec, section 4.4. */
+function cartes() {
+  /* .athing.submission existe sur /news ET sur /item — 30 lignes d'un cote,
+     1 de l'autre. Seul /item l'enveloppe dans <table class="fatitem">. Sans
+     ce filtre, cartes() reecrirait la tete d'un fil de commentaires. */
   const lignes = [...document.querySelectorAll('#hnmain tr.athing.submission')]
     .filter(tr => !tr.closest('table.fatitem'));
   if (!lignes.length) return;
 
-  const scores = lignes.map(scoreDe);
-  const max = Math.max(...scores, 1);
-
-  lignes.forEach((tr, i) => {
+  for (const tr of lignes) {
     const titleline = tr.querySelector('.titleline');
     const suivante = tr.nextElementSibling;
-    /* Les posts d'emploi n'ont PAS de span.subline : leur td.subtext contient
+    /* Les posts d'emploi n'ont PAS de span.subline : leur td.subtext porte
        l'age et hide en enfants directs. Sans ce repli, un post sur trente
-       restait non fusionne, a 17px, avec sa ligne de metadonnee visible. */
+       reste non traite — visible immediatement, il garde sa hauteur native. */
     const subline = suivante && (suivante.querySelector('.subline') || suivante.querySelector('td.subtext'));
-    if (!titleline || !subline) return;
+    if (!titleline || !subline) continue;
 
-    addClass(tr, '__row');
+    addClass(tr, '__card');
 
-    /* Pas de favicon de domaine. La version precedente en posait un depuis
-       google.com/s2/favicons ; Hacker News sert
-       Content-Security-Policy: img-src 'self' https://account.ycombinator.com
-       et bloque les 30 requetes, dans Chrome comme dans Safari. Le domaine
-       reste lisible en toutes lettres dans .sitebit, ou HN le met deja. */
-
-    /* Ponderation par score. L'exposant 0,45 ecrase le haut de la gamme et
-       etale le bas : sans lui un post a 1186 points ecraserait tout le reste.
-       Le plancher a 15,5px est une contrainte — aucun titre ne descend sous
-       la taille de lecture. Le tracking suit le palier de 17px. */
-    const lien = titleline.querySelector('a');
-    if (lien) {
-      const px = Math.round((15.5 + Math.pow(scores[i] / max, 0.45) * 3.5) * 10) / 10;
-      setStyle(lien, 'fontSize', px + 'px');
-      setStyle(lien, 'letterSpacing', px >= 17 ? '-0.012em' : '0');
+    /* Le point du rang est un noeud texte litteral : « 1. ». Aucune regle CSS
+       ne l'atteint, comme les separateurs « | » de la navbar. */
+    const rang = tr.querySelector('.rank');
+    if (rang) {
+      const t = rang.firstChild;
+      if (t && t.nodeType === 3) {
+        const propre = document.createTextNode(t.textContent.replace('.', '').trim());
+        insere(rang, propre, t);
+        detache(t);
+      }
     }
 
-    /* Le groupe de metadonnee. Clone, jamais deplacement. L'auteur n'y est
-       pas : abandon assume, c'est de la commodite, pas de la fonction. */
+    /* Le domaine passe sur sa propre ligne. .sitebit contient des parentheses
+       litterales autour du lien : elles sautent avec la ligne. */
+    const sitebit = titleline.querySelector('.sitebit');
+    if (sitebit) {
+      addClass(sitebit, '__site');
+      [...sitebit.childNodes].filter(n => n.nodeType === 3).forEach(detache);
+    }
+
+    /* La metadonnee. */
     const m = document.createElement('span');
     m.className = '__m';
     const score = subline.querySelector('.score');
+    const auteur = subline.querySelector('a.hnuser');
     const age = subline.querySelector('.age');
     /* Le lien de commentaires est le DERNIER a[href^="item?id="] de la ligne —
        l'age en contient un aussi, et il vient avant. Sur un post d'emploi il
-       n'y a que celui de l'age : sans ce test, l'age etait clone deux fois et
-       la ligne affichait « 12 hours ago  12 hours ago ». */
+       n'y a QUE celui de l'age : sans ce test, l'age etait clone deux fois et
+       la carte affichait « 12 hours ago  12 hours ago ». */
     const items = [...subline.querySelectorAll('a[href^="item?id="]')];
     const dernier = items[items.length - 1];
     const commentaires = dernier && !dernier.closest('.age') ? dernier : null;
-    if (score) m.appendChild(cloneSansId(score));
-    if (age) m.appendChild(cloneSansId(age));
-    if (commentaires) {
-      const c = cloneSansId(commentaires);
-      c.classList.add('__c');
-      m.appendChild(c);
+
+    if (score) {
+      const g = document.createElement('span');
+      g.className = '__pts';
+      g.appendChild(icone('fleche'));
+      g.appendChild(cloneSansId(score));
+      m.appendChild(g);
     }
+    if (auteur) {
+      const a = cloneSansId(auteur);
+      a.classList.add('__by');
+      m.appendChild(a);
+    }
+    if (commentaires) {
+      const g = document.createElement('span');
+      g.className = '__c';
+      g.appendChild(icone('bulle'));
+      g.appendChild(cloneSansId(commentaires));
+      m.appendChild(g);
+    }
+    if (age) m.appendChild(cloneSansId(age));
     insere(titleline, m, null);
 
     const hide = subline.querySelector('a[href^="hide?"]');
@@ -1049,11 +1098,10 @@ function fusionner() {
       insere(tr.lastElementChild, h, null);
     }
 
-    /* La tr.spacer porte style="height:5px" en inline : le CSS ne la bat pas.
-       12px, cran de l'echelle — DESIGN.md dit 15px, hors echelle, signale. */
+    /* La tr.spacer porte style="height:5px" en inline : le CSS ne la bat pas. */
     const espaceur = suivante.nextElementSibling;
-    if (espaceur && espaceur.classList.contains('spacer')) setStyle(espaceur, 'height', '12px');
-  });
+    if (espaceur && espaceur.classList.contains('spacer')) setStyle(espaceur, 'height', '8px');
+  }
 }
 
 
@@ -1528,7 +1576,7 @@ function apply() {
   sidebar();
   entete();
   onglets();
-  fusionner();
+  cartes();
   habilleFil();
   return true;
 }
@@ -1555,7 +1603,7 @@ window.hnRedesign = {
   get spine() { return spine; },
   buildModel, collapse, calculeSpine, frontiere,
   appliqueSpine, restaure, estReplie, estVisible,
-  icone, utilisateur, sidebar, entete, onglets,
+  icone, utilisateur, sidebar, entete, onglets, cartes,
 };
 
 })();

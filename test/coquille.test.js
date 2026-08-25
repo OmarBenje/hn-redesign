@@ -203,3 +203,64 @@ test('pas d onglets sur /item', () => {
   const { document } = charge();
   assert.equal(document.querySelector('.__onglets'), null);
 });
+
+test('les 30 lignes de /news deviennent des cartes', () => {
+  const { document } = charge('news.html', NEWS);
+  const cartes = [...document.querySelectorAll('#hnmain tr.__card')];
+  assert.equal(cartes.length, 30);
+  for (const c of cartes) {
+    assert.ok(c.querySelector('.__m'), 'chaque carte porte sa ligne de metadonnee');
+    assert.ok(c.querySelector('.titleline a'), 'chaque carte porte son titre');
+  }
+});
+
+test('le point du rang est retire, le rang reste lisible', () => {
+  const { document } = charge('news.html', NEWS);
+  const rangs = [...document.querySelectorAll('#hnmain tr.__card .rank')].map(r => r.textContent.trim());
+  assert.equal(rangs[0], '1');
+  assert.equal(rangs[29], '30');
+  assert.ok(rangs.every(r => !r.includes('.')), 'aucun point residuel');
+});
+
+test('les posts d emploi n ont pas de subline et sont traites quand meme', () => {
+  /* Leur td.subtext porte l age et hide en enfants DIRECTS. Sans repli, un
+     post sur trente restait non traite, avec sa ligne native visible. */
+  const { document } = charge('news.html', NEWS);
+  const sansSubline = [...document.querySelectorAll('#hnmain tr.__card')]
+    .filter(tr => tr.nextElementSibling && !tr.nextElementSibling.querySelector('.subline'));
+  for (const tr of sansSubline) assert.ok(tr.querySelector('.__m'), 'traite malgre l absence de subline');
+});
+
+test('l age n est jamais affiche deux fois', () => {
+  /* Sur un post d emploi le SEUL a[href^="item?id="] est celui de l age. Le
+     prendre pour un lien de commentaires l affichait deux fois. */
+  const { document } = charge('news.html', NEWS);
+  for (const m of document.querySelectorAll('#hnmain tr.__card .__m')) {
+    assert.ok(m.querySelectorAll('.age').length <= 1, 'au plus un age par carte');
+  }
+});
+
+test('la ligne de metadonnee native est masquee, pas supprimee', () => {
+  const { document } = charge('news.html', NEWS);
+  const premiere = document.querySelector('#hnmain tr.__card');
+  assert.ok(premiere.nextElementSibling.querySelector('td.subtext'), 'la tr native existe encore');
+});
+
+test('les icones de metadonnee sont posees', () => {
+  const { document } = charge('news.html', NEWS);
+  const m = document.querySelector('#hnmain tr.__card .__m');
+  assert.ok(m.querySelector('svg'), 'la fleche des points est un SVG inline');
+});
+
+test('aucune carte sur /item — .athing.submission y existe aussi', () => {
+  const { document } = charge();
+  assert.equal(document.querySelectorAll('tr.__card').length, 0);
+  assert.ok(document.querySelector('table.fatitem'), 'la fixture item porte bien une fatitem');
+});
+
+test('revert rend #hnmain identique a l octet sur /news', () => {
+  const { api, document } = charge('news.html', NEWS, connecte('omarbenje'));
+  api.revert();
+  const apres = document.querySelector('#hnmain').innerHTML;
+  assert.equal(apres, temoinBrut('news.html', connecte('omarbenje')).querySelector('#hnmain').innerHTML);
+});
