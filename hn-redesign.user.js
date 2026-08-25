@@ -141,7 +141,13 @@ const CSS = `
   color: var(--meta);
 }
 
-.${ROOT} #hnmain .hnuser { color: var(--author); }
+/* L'auteur ressort du gris meta : c'est la seule information de la ligne
+   qu'on relit. Le selecteur porte a.hnuser et pas .hnuser seul, sinon la
+   regle des liens de metadonnee ci-dessous le rattrape d'un element de
+   specificite et le renvoie en gris. Mesure : 8,86:1 au lieu de 5,09:1. */
+.${ROOT} #hnmain a.hnuser,
+.${ROOT} #hnmain .comhead a.hnuser,
+.${ROOT} #hnmain .subline a.hnuser { color: var(--author); }
 
 /* Le titre du post sur /item : le seul element au-dessus de 17 px.
 
@@ -157,16 +163,46 @@ const CSS = `
   letter-spacing: -0.012em;
 }
 
+/* ----------------------------------------------------------- liens T13/T15
+   Un lien prend le haut de la rampe, pas un token a lui. C'est la grammaire
+   de HN elle-meme : news.css:11 met a:link a #000000 et news.css:32 met .c00
+   a #000000 — la meme valeur. Un lien est du texte de corps qui mene ailleurs.
+
+   Sans cette regle, le theme sombre est casse : HN laisse a:link a #000000,
+   ce qui donne 1,06:1 sur le fond de colonne sombre. Le titre du post et le
+   lien reply etaient invisibles. Non detectable en clair, ou le noir marche. */
+.${ROOT} #hnmain a { color: var(--c00); }
+
+/* Les liens de metadonnee restent en gris meta. news.css:49 les declare
+   directement (.comhead a:link), donc les styler par heritage ne suffit pas
+   — encore le piege n.4. Specificite superieure a la regle ci-dessus. */
+.${ROOT} #hnmain .comhead a,
+.${ROOT} #hnmain .subline a,
+.${ROOT} #hnmain .subtext a,
+.${ROOT} #hnmain .age a { color: var(--meta); }
+
 /* --------------------------------------------------- rampe de downvote T14
    Cinq regles, jamais une seule. Plancher 3:1 dans les deux themes, et le
-   dernier cran bascule sur l'axe de teinte : chaud -> froid. */
-.${ROOT} #hnmain .commtext.c00 { color: var(--c00); }
+   dernier cran bascule sur l'axe de teinte : chaud -> froid.
+
+   Chaque cran couvre aussi les LIENS qu'il contient, exactement comme HN
+   (news.css:32-38 : .c73, .c73 a:link, .c73 a:visited). Un lien dans un
+   commentaire enterre doit descendre avec lui, sinon il remonte tout seul
+   au premier plan du fil. */
+.${ROOT} #hnmain .commtext.c00,
+.${ROOT} #hnmain .commtext.c00 a { color: var(--c00); }
 .${ROOT} #hnmain .commtext.c5a,
-.${ROOT} #hnmain .commtext.c5A { color: var(--c5A); }
-.${ROOT} #hnmain .commtext.c73 { color: var(--c73); }
-.${ROOT} #hnmain .commtext.c88 { color: var(--c88); }
+.${ROOT} #hnmain .commtext.c5A,
+.${ROOT} #hnmain .commtext.c5a a,
+.${ROOT} #hnmain .commtext.c5A a { color: var(--c5A); }
+.${ROOT} #hnmain .commtext.c73,
+.${ROOT} #hnmain .commtext.c73 a { color: var(--c73); }
+.${ROOT} #hnmain .commtext.c88,
+.${ROOT} #hnmain .commtext.c88 a { color: var(--c88); }
 .${ROOT} #hnmain .commtext.cdd,
-.${ROOT} #hnmain .commtext.cDD { color: var(--cDD); }
+.${ROOT} #hnmain .commtext.cDD,
+.${ROOT} #hnmain .commtext.cdd a,
+.${ROOT} #hnmain .commtext.cDD a { color: var(--cDD); }
 
 /* Le second signal de couleur de HN : a:visited grise les titres deja lus.
    Meme froid que le dernier cran de la rampe — ce qui est froid est ce qui

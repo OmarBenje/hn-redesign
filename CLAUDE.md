@@ -49,6 +49,14 @@ test/                  node --test + linkedom (a creer, T10)
 
 ## Tests
 
+`node test/contraste.mjs` — les 9 couleurs contre leur fond dans les deux themes, la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
+
+`node test/regles.mjs` — les invariants que le rendu **ne peut pas** verifier. Le cas qui justifie ce fichier : `a:visited`. Aucun navigateur ne dit la verite sur une regle `:visited` via `getComputedStyle` — ils mentent tous, deliberement, contre le history sniffing. On ne peut donc pas tester au rendu que les titres deja lus restent gris ; on prouve que la regle existe et qu'elle **gagne en specificite**. Le fichier verifie aussi la parite des tokens entre les trois blocs de theme et le budget de coherence de T25.
+
+> Attention en editant le CSS : il vit dans un template literal. **Un backtick dans un commentaire CSS casse le fichier.** `node --check hn-redesign.user.js` l'attrape immediatement.
+
+## Tests unitaires
+
 `node --test`. Couvre le calcul pur : construction du modèle d'arbre, descente du Thread Spine, idempotence du repli, calcul de la frontière.
 
 **Ne couvre pas, et ne couvrira jamais :** focus, `scrollIntoView`, navigation `J`/`K`, rendu, handlers inline de HN, comportement Safari. Environ 8 chemins sur 24. **Une suite verte ne prouve pas que la navigation marche.**
