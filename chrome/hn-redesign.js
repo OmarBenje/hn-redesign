@@ -47,7 +47,7 @@ const STYLE_ID = 'hn-redesign-style';
 
 const CSS = `
 /* ------------------------------------------------------------------ tokens
-   21 tokens. Clair par defaut, sombre par media query, et une classe de
+   22 tokens. Clair par defaut, sombre par media query, et une classe de
    surcharge qui gagne sur les deux (T22 s'en sert).
 
    La palette est passee du beige chaud au neutre froid avec la coquille app.
@@ -73,6 +73,9 @@ const CSS = `
   --accent: #F26207;
   --accent-text: #BF4300;
   --visited: #8D9195;
+  /* Un noir sur fond noir ne dit rien : en sombre, le filet de bordure porte
+     seul la separation, et l'ombre s'efface via ce meme token. */
+  --ombre: 0 1px 2px rgba(0, 0, 0, .04);
 
   --c00: #0B0B0C;
   --c5A: #2B2D33;
@@ -93,6 +96,7 @@ const CSS = `
     --rail: #2E2E34;
     --accent-text: #F26207;
     --visited: #636669;
+    --ombre: none;
 
     --c00: #F2F2F3;
     --c5A: #CDCFD5;
@@ -113,6 +117,7 @@ const CSS = `
   --rail: #2E2E34;
   --accent-text: #F26207;
   --visited: #636669;
+  --ombre: none;
 
   --c00: #F2F2F3;
   --c5A: #CDCFD5;
@@ -375,13 +380,8 @@ const CSS = `
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+  box-shadow: var(--ombre);
 }
-/* L'ombre ne dit rien sur un fond noir : en sombre, le filet suffit seul. */
-@media (prefers-color-scheme: dark) {
-  .${ROOT}:not(.hn-light) #hnmain tr.__card { box-shadow: none; }
-}
-.${ROOT}.hn-dark #hnmain tr.__card { box-shadow: none; }
 
 .${ROOT} #hnmain tr.__card > td.title:first-child { grid-area: 1 / 1; padding: 0; }
 .${ROOT} #hnmain tr.__card > td.votelinks { grid-area: 2 / 1; padding: 6px 0 0; }

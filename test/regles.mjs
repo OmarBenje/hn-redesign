@@ -61,7 +61,7 @@ const bloc = re => { const b = css.match(re); return b ? [...b[1].matchAll(/(--[
 const clair = bloc(/\.hn-redesign \{([\s\S]*?)\}/);
 const media = bloc(/@media \(prefers-color-scheme: dark\) \{\s*\.hn-redesign:not\(\.hn-light\) \{([\s\S]*?)\}/);
 const forced = bloc(/\.hn-redesign\.hn-dark \{([\s\S]*?)\}/);
-ok(clair.length === 21, `21 tokens en clair (trouve ${clair.length})`);
+ok(clair.length === 22, `22 tokens en clair (trouve ${clair.length})`);
 ok(media.length === forced.length && media.every((t, i) => t === forced[i]),
    `la media query et .hn-dark redefinissent exactement les memes ${media.length} tokens`);
 const jamaisRedefinis = clair.filter(t => !media.includes(t));
@@ -72,10 +72,7 @@ ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius-sm', '--radius-md', '
 const radius = new Set([...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()));
 ok(radius.size <= 3, `<= 3 valeurs de border-radius (${[...radius].join(', ') || 'aucune'})`);
 ok(!/transition|animation/.test(css), '0 transition, 0 animation');
-/* "none" desactive l'ombre, elle ne s'ajoute pas au budget : la carte porte
-   UNE ombre, qui disparait en sombre via cette meme valeur "none". */
-const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim())
-  .filter(v => v !== 'none'));
+const ombres = new Set([...css.matchAll(/box-shadow:\s*([^;]+);/g)].map(x => x[1].trim()));
 ok(ombres.size <= 1, `<= 1 ombre (${[...ombres].join(', ') || 'aucune'})`);
 
 /* 5. T2 — rien hors de #hnmain sauf trois exceptions NOMMEES.
