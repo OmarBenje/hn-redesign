@@ -2,7 +2,9 @@
 
 Un userscript qui redessine Hacker News dans Safari sur macOS. Exécuté par [Userscripts](https://github.com/quoid/userscripts) (quoid, MIT). Un seul utilisateur.
 
-**Le plan complet vit hors du dépôt**, dans les artefacts gstack locaux : 22 tâches, revues eng et design passées, verdict CLEARED.
+**La roadmap fait autorite : [`ROADMAP.md`](ROADMAP.md).** 25 taches en 6 phases, revues eng et design passees, verdict CLEARED. En cas de contradiction avec un autre document, ROADMAP.md gagne.
+
+**T1 est une porte.** Tout le plan suppose que le runtime Userscripts charge un fichier local, le recharge apres modification, et survit a un redemarrage de Safari. Personne ne l'a execute. Rien ne commence avant.
 
 ## Design System
 
@@ -27,11 +29,13 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 ## Structure
 
 ```
-hn-redesign.user.js    le script — modèle de commentaires, repli, Thread Spine, clavier
-hn-redesign.css        la feuille — tokens, typographie, rampe, rails
-DESIGN.md              le système de design (source de vérité visuelle)
-design-refs/           captures de référence, rendues sur le vrai fil de 206 commentaires
-test/                  node --test + linkedom + fixtures HTML
+ROADMAP.md             les 25 taches, en 6 phases — source de verite du reste a faire
+DESIGN.md              le systeme de design — source de verite visuelle
+CLAUDE.md              ce fichier
+hn-redesign.user.js    le script (a creer) — modele, repli, Thread Spine, clavier, navbar
+hn-redesign.css        la feuille (a creer) — tokens, typographie, rampe, rails
+design-refs/           captures de reference + capture.sh
+test/                  node --test + linkedom + fixtures (a creer)
 ```
 
 ## Tests

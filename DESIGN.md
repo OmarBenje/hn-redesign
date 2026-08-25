@@ -3,6 +3,8 @@
 > Créé le 2026-08-25 par `/design-consultation`. Typographie et page d'accueil révisées le même jour.
 > Chaque valeur de ce fichier a été vérifiée : les contrastes sont calculés, la densité est mesurée, et le système entier a été rendu sur la vraie page d'accueil et un vrai fil de 206 commentaires, dans les deux thèmes. Les captures sont dans `design-refs/`.
 
+> Le reste a faire vit dans [`ROADMAP.md`](ROADMAP.md) : 25 taches, 6 phases. Ce fichier-ci ne dit que **a quoi ca doit ressembler**.
+
 ## Le principe directeur
 
 > **« Enfin je peux lire HN. »**
