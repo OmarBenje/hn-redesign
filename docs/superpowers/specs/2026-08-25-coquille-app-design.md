@@ -116,7 +116,7 @@ grid-template-rows: auto 1fr;
 
   td.title (rang)   → 1 / 1     pastille orange, 26px, cercle, chiffre blanc 13px/700
   td.votelinks      → 2 / 1     la flèche de vote, centrée
-  td.title (titre)  → 1 / 3 sur la colonne 2   le contenu, trois lignes empilées
+  td.title (titre)  → grid-row: 1 / 3 ; grid-column: 2   le contenu, trois lignes
 ```
 
 **Le point du rang** (`1.` → `1`) est un nœud texte à retirer, comme la phase 3 retirait les séparateurs `|`. Il passe par `detache`.
@@ -157,7 +157,7 @@ C'est la seule fonctionnalité livrée que ce chantier supprime. Elle est notée
 - une flèche montante, 12 px, devant le nombre de points ;
 - une bulle de commentaire, 12 px, devant le nombre de commentaires.
 
-Plus les icônes de la sidebar (4 à 6, 18 px) et la loupe de la recherche. Toutes du même trait : 1,5 px, `currentColor`, `stroke-linecap: round`. Le budget de lint passe de 0 à 2 **familles** d'icônes déclarées — la vérification porte sur `font-family` contenant `icon|awesome|material`, qui reste à **0** : nos icônes sont des `<svg>`, pas une police.
+Plus les quatre icônes de la sidebar (18 px) et la loupe de la recherche, soit **sept SVG en tout**. Toutes du même trait : 1,5 px, `currentColor`, `stroke-linecap: round`. Le budget de lint passe de 0 à 2 **familles** d'icônes déclarées — la vérification porte sur `font-family` contenant `icon|awesome|material`, qui reste à **0** : nos icônes sont des `<svg>`, pas une police.
 
 ## 5. La couleur
 
@@ -176,7 +176,7 @@ Le système passe du **beige chaud** au **neutre froid** de la maquette.
 | Auteur | `--author` | `#4B5058` | `#B8BCC3` |
 | Rail de profondeur | `--rail` | `#E6E6E9` | `#2E2E34` |
 | Accent en aplat | `--accent` | `#F26207` | `#F26207` |
-| Accent texte | `--accent-text` | à mesurer, cible ≥ 4,5:1 | `#F26207` |
+| Accent texte | `--accent-text` | `#BF4300` (5,23:1 sur `#FFFFFF`, 4,88:1 sur `#F7F7F8`) | `#F26207` (5,51:1 sur `#18181B`) |
 | Lien visité | `--visited` | `#8D9195` | `#636669` |
 | Rampe | `--c00`…`--cDD` | recalculée | recalculée |
 
@@ -185,7 +185,7 @@ Le système passe du **beige chaud** au **neutre froid** de la maquette.
 ### 5.2 Les contraintes de contraste, non négociables
 
 - **Plancher de 3:1** sur tout texte de contenu, dans les deux thèmes.
-- **`#F26207` ne peut pas être du texte en thème clair sans mesure.** Sur `#FFFFFF` il vaut ~3,4:1 — suffisant pour le domaine à 14 px sous le plancher de 3:1, insuffisant pour du corps. `--accent-text` est une valeur **distincte**, assombrie jusqu'à ≥ 4,5:1, et c'est elle que porte tout texte accentué. L'orange pur reste réservé aux aplats : pastille de rang, soulignement d'onglet, carré du logo, marqueur du commentaire actif.
+- **`#F26207` ne peut pas être du texte en thème clair sans mesure.** Mesuré : **3,22:1 sur `#FFFFFF`, 3,01:1 sur `#F7F7F8`** — il franchit le plancher de 3:1 de justesse, et échoue au 4,5:1 du texte de corps. `--accent-text` est une valeur **distincte** : `#BF4300` en clair — la valeur déjà retenue par le système actuel, qui donne 5,23:1 sur la carte blanche — et `#F26207` tel quel en sombre, où il vaut 5,51:1. C'est elle que porte tout texte accentué, **y compris le domaine de la ligne 2 de la carte**. L'orange pur reste réservé aux aplats : pastille de rang, soulignement d'onglet, carré du logo, marqueur du commentaire actif.
 - **Chaque paire est recalculée**, pas héritée. `test/contraste.mjs` est réécrit sur la nouvelle palette.
 
 ### 5.3 Les deux signaux de HN, intacts
