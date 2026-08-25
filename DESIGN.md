@@ -113,9 +113,9 @@ Le titre de post n'est qu'à 1,4× le corps. Volontaire : sur HN le titre n'est 
 
 ### `--rail` et `--line` ne sont pas interchangeables
 
-**`--rail` appartient à la gouttière de profondeur du fil, et nulle part ailleurs.** Cette gouttière dessine **un trait par niveau d'ancêtre** — le *nombre* de traits est la profondeur, il se compte au lieu de se deviner (§ Spacing). Un token partagé avec autre chose romprait ce comptage le jour où quelqu'un change `--rail` pour une autre raison.
+**`--rail` est le gris structurel le plus pâle de la palette** — utilisé pour la gouttière de profondeur du fil, et pour la flèche de vote au repos sur la carte (`--accent` au survol). Les deux usages partagent la même intention : un repère discret, jamais un texte. Ce que `--rail` ne devient **jamais**, c'est un séparateur : la gouttière dessine **un trait par niveau d'ancêtre** — le *nombre* de traits est la profondeur, il se compte au lieu de se deviner (§ Spacing) — et cette propriété casserait si `--rail` se mettait à faire aussi le travail de `--line`.
 
-**`--line` sépare deux zones de l'interface** : bord de carte, bord de sidebar, filet sous la barre de position, cadre de la pilule de recherche. Un exemple concret vit dans le CSS lui-même, en commentaire à côté de la barre de position : *« `--line` et non `--rail` : ce trait sépare la barre de position du fil, ce n'est pas un cran de la gouttière de profondeur. »*
+**`--line` sépare deux zones de l'interface** : bord de carte, bord de sidebar, filet sous la barre de position, cadre de la pilule de recherche. `--line` ne dessine jamais la gouttière, et `--rail` ne devient jamais un séparateur — les deux sens de l'échange sont interdits. Un exemple concret vit dans le CSS lui-même, en commentaire à côté de la barre de position : *« `--line` et non `--rail` : ce trait sépare la barre de position du fil, ce n'est pas un cran de la gouttière de profondeur. »*
 
 Cette distinction est écrite ici pour qu'un futur `sed` de refactor ne fusionne pas les deux tokens en croyant simplifier — ce serait rendre la profondeur illisible pour économiser une variable.
 
@@ -205,7 +205,7 @@ grid-template-rows: auto 1fr;
 | 2 | Le domaine, `.sitestr` | 14 px / 20 px, `--accent-text` |
 | 3 | Métadonnée : `↑ points` · séparateur · `auteur` · `💬 commentaires` · séparateur · `âge` | 13 px / 18 px, `--meta` |
 
-**Les flèches de vote.** HN les sert en `<div class="votearrow">` de 10 × 10 avec `triangle.svg` en fond — une **image**, donc elles ne suivaient ni les tokens ni le thème. `clip-path` et non un triangle en bordures : la boîte garde ses 10 × 10, donc le `rotate180` que HN applique à la flèche de *downvote* tourne autour du bon centre. Un triangle en bordures a une boîte de 0 × 0 et se déplacerait en tournant. Elles prennent `--meta`, `--accent` au survol. *(La flèche de downvote n'a pas pu être vérifiée : elle demande un compte avec assez de karma.)*
+**Les flèches de vote.** HN les sert en `<div class="votearrow">` de 10 × 10 avec `triangle.svg` en fond — une **image**, donc elles ne suivaient ni les tokens ni le thème. `clip-path` et non un triangle en bordures : la boîte garde ses 10 × 10, donc le `rotate180` que HN applique à la flèche de *downvote* tourne autour du bon centre. Un triangle en bordures a une boîte de 0 × 0 et se déplacerait en tournant. Elles prennent `--rail` au repos, `--accent` au survol. *(La flèche de downvote n'a pas pu être vérifiée : elle demande un compte avec assez de karma.)*
 
 > [!info] Il n'y a pas de favicon de domaine
 > Le système en a porté un un temps, tiré de `google.com/s2/favicons`. **Il ne s'affichait jamais sur la vraie page** : Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com` et bloque les requêtes, dans Chrome comme dans Safari. Retiré le 2026-08-25, avant la coquille app, et resté retiré depuis : le domaine reste lisible en toutes lettres, ligne 2 de la carte. Le projet reste à **zéro requête réseau**.
@@ -248,7 +248,7 @@ Sur `/news` comme sur `/item`, identique. Trois zones : titre de page (30 px / 3
 
 **Le formulaire de recherche existe déjà.** HN sert `<form method="get" action="//hn.algolia.com/">` dans son pied de page. Il est **déplacé** dans l'en-tête et habillé, pas fabriqué — l'`action` ne change pas, et le zéro requête réseau au chargement est préservé : un `action` de formulaire n'est qu'une cible de navigation, pas une requête.
 
-Le carré orange du logo `y18` reste, réduit à 22 px, arrondi `--radius-md`, en tête de la sidebar.
+Le carré orange du logo `y18` reste, réduit à un cadre de 36 px (`--radius-md`) contenant l'image à 22 px, en tête de la sidebar.
 
 ### La barre d'onglets — 68 px
 

@@ -233,7 +233,7 @@ Remplacement du design de liste dense livré en phase 3 — pas une variante. Si
 | **5** | Les onglets Top / New / Best — état actif sur `op`, repli sur `location.pathname` | ✅ |
 | **6** | La carte — `tr.athing.submission` en `display: grid` sur les trois `td` natifs | ✅ |
 | **7** | L'ombre de la carte passe par le token `--ombre`, pas par un budget de lint assoupli en douce | ✅ |
-| **8** | Palette neutre froide — 22 tokens en clair, 16 redéfinis en sombre, tous les contrastes recalculés | ✅ |
+| **8** | Palette neutre froide — 22 tokens en clair (21 à l'introduction de la palette, `--ombre` est arrivé avec l'ombre de la carte), 16 redéfinis en sombre, tous les contrastes recalculés | ✅ |
 
 **Ce qui a été mesuré :**
 
