@@ -192,7 +192,9 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 >
 > **Effet de bord retrouvé : zéro requête réseau.** C'était vrai de la typographie, ce ne l'était plus de la liste. Ça l'est de nouveau — mesuré sur la vraie page, 0 requête sortante et 0 message de console.
 
-**2. Les flèches de vote.** HN les sert en `<div class="votearrow">` de 10 × 10 avec `triangle.svg` en fond — une **image**, donc elles ne suivaient ni les tokens ni le thème, et gardaient en sombre le gris choisi pour un fond beige. Leur marge `3px 2px 6px` était par ailleurs calée sur la ligne de 30 px en Verdana de HN. Elles prennent maintenant `--meta`, `--accent` au survol, et une marge nulle.
+**2. Les flèches de vote.** Elles sont séparées du rang et du titre par **8 px de chaque côté**. La cellule de vote de HN fait exactement 10 px — la largeur de la flèche — donc sans ces deux paddings les trois éléments se touchent : `1.▲iCloud+`. C'est arrivé, en corrigeant la marge asymétrique décrite ci-dessous.
+
+**Les flèches en détail.** HN les sert en `<div class="votearrow">` de 10 × 10 avec `triangle.svg` en fond — une **image**, donc elles ne suivaient ni les tokens ni le thème, et gardaient en sombre le gris choisi pour un fond beige. Leur marge `3px 2px 6px` était par ailleurs calée sur la ligne de 30 px en Verdana de HN. Elles prennent maintenant `--meta`, `--accent` au survol, et une marge nulle.
 
 **`clip-path` et non un triangle en bordures.** La boîte garde ses 10 × 10, donc le `rotate180` que HN applique à la flèche de *downvote* tourne autour du bon centre. Un triangle en bordures a une boîte de 0 × 0 et se déplacerait en tournant. *(La flèche de downvote n'a pas pu être vérifiée : elle demande un compte avec assez de karma.)*
 
@@ -250,6 +252,7 @@ Deux choses cessent d'être visibles, et restent dans le DOM :
 | Indentation par niveau | **22 px** (HN natif : 40) |
 | Rail vertical | 1 px, à `indent − 11 px` |
 | Padding latéral de colonne | 48 px |
+| Rang → flèche de vote, flèche → titre | 8 px |
 | Entre deux posts de la liste | **12 px** |
 | Barre de position | 28 px de haut, filet supérieur 1 px |
 
@@ -396,6 +399,8 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Anneau de focus et cadres de formulaire, une seule valeur pour tous. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Padding de colonne réellement appliqué** | Les 48 px étaient spécifiés depuis le début et valaient **7 px** sur la liste : la navbar les avait dans ses propres cellules, le contenu non, et les deux bords gauches ne s'alignaient pas. |
+| 2026-08-25 | **8 px autour de la flèche de vote** | La cellule de vote fait 10 px pile. Recentrer la flèche avec `margin: 0` collait rang, flèche et titre. |
 | 2026-08-25 | **Flèches de vote habillées** | Elles étaient une image, donc hors du système : ni token, ni thème, et une marge calée sur la ligne de HN. `clip-path` plutôt que bordures, pour que le `rotate180` du downvote tourne juste. |
 | 2026-08-25 | **Favicon de domaine retiré** | La CSP de HN bloque les 30 requêtes ; il ne s'affichait jamais en production. Le repli « replier la gouttière » a été retiré avec lui : du code qui ne sert jamais utilement est mort, même quand il dégrade proprement. Rend au projet ses **zéro requête réseau**. |
 | 2026-08-25 | **Un trait de rail par ancêtre** | Un trait unique n'exprime que l'imbrication ; le nombre de traits exprime la profondeur. Une règle de fond remplace douze règles de largeur. |

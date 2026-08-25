@@ -113,6 +113,15 @@ const CSS = `
    couvrirait le dernier commentaire du fil sans cette reserve. */
 .${ROOT} #hnmain { background: var(--col); padding-bottom: 28px; }
 
+/* Padding lateral de colonne : 48px, la valeur de DESIGN.md. La navbar l'avait
+   deja dans ses propres cellules ; le contenu, non — le rang commencait a 7px
+   du bord quand le logo etait a 48, et les deux bords gauches ne s'alignaient
+   pas. La premiere ligne est exclue : c'est la navbar, qui gere le sien. */
+.${ROOT} #hnmain > tbody > tr:not(:first-child) > td {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
 /* ------------------------------------------------------------ typographie
    Tracking : deux paliers. 0 sous 17 px, -0.012em au-dessus. La valeur
    negative n'apparait qu'une fois dans tout le fichier.
@@ -285,6 +294,10 @@ const CSS = `
    getElementById. */
 .${ROOT} #hnmain tr.__row { position: relative; }
 .${ROOT} #hnmain tr.__row > td { padding: 6px 0; vertical-align: middle; }
+/* La cellule de vote fait exactement 10px — la largeur de la fleche. Sans ces
+   deux paddings, rang, fleche et titre se touchent : « 1.▲iCloud+ ». */
+.${ROOT} #hnmain tr.__row > td.title:first-child { padding-right: 8px; }
+.${ROOT} #hnmain tr.__row > td.votelinks { padding-right: 8px; }
 .${ROOT} #hnmain tr.__row + tr { display: none; }
 /* Les fleches de vote. HN les sert en <div class="votearrow"> de 10x10 avec
    triangle.svg en fond : une IMAGE, donc elles ne suivaient ni les tokens ni
