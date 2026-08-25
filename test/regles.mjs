@@ -102,5 +102,25 @@ const negatifs = [...css.matchAll(/letter-spacing:\s*(-[^;]+);/g)].map(x => x[1]
 ok(new Set(negatifs).size <= 1 && (negatifs[0] === undefined || negatifs[0] === '-0.012em'),
    `une seule valeur de tracking negatif dans la feuille (${[...new Set(negatifs)].join(', ') || 'aucune'})`);
 
+/* 7. le fil — phase 4 */
+const brut = m[1];   /* AVANT retrait des commentaires : c'est le sujet du test */
+const ouvre = (brut.match(/\/\*/g) || []).length;
+const ferme = (brut.match(/\*\//g) || []).length;
+ok(ouvre === ferme,
+   `commentaires CSS equilibres — ${ouvre} ouverts, ${ferme} fermes. Un /* non ferme avale les regles suivantes SANS erreur : node --check ne voit rien, la feuille se charge, et douze regles disparaissent.`);
+const paliers = [...css.matchAll(/tr\.__i(\d+) td\.ind img \{[^}]*width:\s*(\d+)px/g)]
+  .map(x => [Number(x[1]), Number(x[2])]);
+ok(paliers.length === 12, `12 paliers d'indentation (trouve ${paliers.length})`);
+ok(paliers.every(([d, w]) => w === Math.max(0, d * 22 - 11)),
+   'chaque palier vaut indent moins 11 — le rail tombe au milieu de la gouttiere, pas contre le texte');
+ok(/tr\.athing\.comtr td\.ind \{[^}]*padding:\s*0 10px 0 0/.test(css),
+   'la gouttiere compense : (indent - 11) d image + 10 de padding + 1 de bordure = indent');
+ok(/\.__apercu \{[^}]*display:\s*none/.test(css) && /tr\.coll \.__apercu/.test(css),
+   "l apercu du commentaire replie est revele par la classe coll de HN, pas par du JS au moment du repli");
+ok(/tr\.__actif \.comhead::before/.test(css) && /height:\s*14px/.test(css),
+   'le marqueur du commentaire actif est un tiret de 14px, pas un rail pleine hauteur');
+ok(/\.__barre \{[^}]*position:\s*fixed/.test(css) && !/\.__barre \{[^}]*left:\s*0/.test(css),
+   'la barre de position ne se colle pas au bord de la fenetre — le JS l aligne sur la colonne');
+
 console.log(echecs.length ? `\n${echecs.length} ECHEC(S)\n` : '\nTout tient.\n');
 process.exit(echecs.length ? 1 : 0);

@@ -13,7 +13,7 @@ Les polices, couleurs, espacements et la direction esthétique y sont définis, 
 Ne pas en dévier sans accord explicite d'Omar.
 En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
-## Les sept choses qui cassent ce projet si on les oublie
+## Les huit choses qui cassent ce projet si on les oublie
 
 1. **Les deux signaux de couleur de HN.** (a) La rampe de downvote sur les commentaires : `.commtext.c00` → `.cDD`. Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. (b) `a:visited { color:#828282 }` sur la liste : HN grise les titres déjà lus, et `#hnmain a { color: ... }` l'écrase. Les deux se cassent de la même façon — une règle de couleur trop large. Voir `DESIGN.md` § Color.
 
@@ -29,6 +29,8 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
 7. **Toute mutation du DOM doit s'enregistrer dans la pile d'annulation.** Depuis la phase 3, le script insère des nœuds, pose des classes, écrit des `style` inline et retire des nœuds texte. Retirer la classe racine n'annule rien de tout ça. Passer par `addClass` / `setStyle` / `insere` / `detache` n'est pas une commodité : c'est ce qui fait tenir l'échec fermé. Et `setStyle` sauvegarde l'**attribut `style` brut**, pas la propriété — le CSSOM re-sérialise, et la comparaison de réversibilité échoue sur des espaces.
 
+8. **Un `/*` non ferme dans le CSS avale les regles suivantes, en silence.** Le CSS vit dans un template literal : `node --check` ne le lit pas, la feuille se charge sans erreur, et douze regles d'indentation ont disparu sans que rien ne le signale — l'ecran montrait 40px la ou la feuille disait 22. `node test/regles.mjs` compte desormais les delimiteurs. C'est le meme piege que le backtick du point precedent, en pire : le backtick casse le fichier tout de suite, le commentaire non ferme ne casse rien.
+
 ## Contraintes de la machine
 
 - **Pas de Xcode** et ~19 Go libres. Xcode en demande ~40. Aucun plan impliquant un projet Xcode, `safari-web-extension-converter`, ou une extension Safari native n'est réalisable. Userscripts contourne tout ça.
@@ -40,11 +42,13 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 ROADMAP.md             les 25 taches, en 6 phases — source de verite du reste a faire
 DESIGN.md              le systeme de design — source de verite visuelle
 CLAUDE.md              ce fichier
-hn-redesign.user.js    le script — phases 2 et 3 : tokens, rampe, typographie, ligne fusionnee, navbar
+hn-redesign.user.js    le script — phases 2, 3 et 4 : tokens, rampe, typo, ligne fusionnee,
+                       navbar, modele d'arbre, Thread Spine, clavier, barre de position
+README.md              installation, raccourcis, attribution MIT de refined-hacker-news
 t1-spike.user.js       jetable, a supprimer une fois T1 repondu
 test/contraste.mjs     verifie les 9 couleurs, la regularite L* et la bascule de teinte
 test/regles.mjs        21 invariants de la feuille — specificite, rampe, tokens, budget T25
-test/rendu.sh          30 assertions au rendu, dont la reversibilite du DOM a l'octet
+test/rendu.sh          66 assertions au rendu, dont la reversibilite du DOM a l'octet
 design-refs/           captures de reference + capture.sh
 test/                  node --test + linkedom (a creer, T10)
 ```
@@ -57,7 +61,9 @@ test/                  node --test + linkedom (a creer, T10)
 
 `node test/contraste.mjs` — les 9 couleurs contre leur fond dans les deux themes, la regularite de la rampe en **L\*** (pas en ratio de contraste : le ratio n'est pas perceptuel et sa decroissance vers le bas de la rampe fait croire a une irregularite qui n'existe pas), et la bascule de teinte du dernier cran.
 
-`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 30 assertions. Prerequis : `./design-refs/capture.sh ./design-refs/fixtures`. Moteur : Chromium headless via `browse`. **Ce n'est pas Safari.**
+`./test/rendu.sh` — ce que node ne peut **pas** voir : hauteurs mesurees au `getBoundingClientRect`, densite, couleurs calculees, modele d'arbre, Thread Spine, clavier, et la **reversibilite octet par octet** de `#hnmain` entre `apply()` et `revert()`. 5 pages, 66 assertions.
+
+> Attention en ecrivant une assertion : **`getComputedStyle` rend une vue VIVANTE.** Lire une propriete apres avoir change l'etat rend l'etat d'apres, pas celui de la mesure. Figer en chaines tout de suite. Un marqueur parfaitement fonctionnel s'est mesure a `auto x auto` pour cette raison. Prerequis : `./design-refs/capture.sh ./design-refs/fixtures`. Moteur : Chromium headless via `browse`. **Ce n'est pas Safari.**
 
 `node test/regles.mjs` — les invariants que le rendu **ne peut pas** verifier. Le cas qui justifie ce fichier : `a:visited`. Aucun navigateur ne dit la verite sur une regle `:visited` via `getComputedStyle` — ils mentent tous, deliberement, contre le history sniffing. On ne peut donc pas tester au rendu que les titres deja lus restent gris ; on prouve que la regle existe et qu'elle **gagne en specificite**. Le fichier verifie aussi la parite des tokens entre les trois blocs de theme et le budget de coherence de T25.
 

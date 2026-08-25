@@ -275,6 +275,63 @@ C'est une contrainte, pas un effet de bord. Aérer et le Thread Spine résolvent
 
 **Cible de la liste : 30 posts**, atteinte par la ligne fusionnée à 32 px (T23, mesurée sur prototype : hauteur médiane 32 px, 30 posts entamés). Tant que T23 n'est pas livrée, le plancher reste 24.
 
+## Le fil de commentaires
+
+C'est l'écran que le projet existe pour rendre lisible. Livré le 2026-08-25.
+
+### Le Thread Spine
+
+Un fil de 91 commentaires contient une branche principale et une trentaine d'apartés. Le Thread Spine calcule la branche dominante, la garde dépliée, et replie **la frontière** — les frères des nœuds du chemin, jamais tous les non-spine. Replier un parent cache déjà sa descendance ; cliquer aussi les descendants corrompt leur état sans rien changer à l'écran.
+
+**Le score d'une branche** est la taille de son sous-arbre, pondérée par la longueur moyenne de ses commentaires rapportée à celle du fil :
+
+```
+score = taille × √(longueur_moyenne_de_la_branche / longueur_moyenne_du_fil)
+```
+
+Le `n` brut choisit la branche la plus **peuplée**, qui est souvent une querelle de mots. Le volume de texte brut choisit le **monologue** le plus long. La racine carrée amortit la pondération pour qu'un seul commentaire très long ne batte pas une vraie discussion. Le point de départ est une **racine virtuelle** regroupant tous les commentaires de profondeur 0 — sans ce point fixé explicitement, deux implémentations légitimes désignent deux colonnes différentes. Les égalités sont départagées par l'ordre du document, sinon le spine change d'un rechargement à l'autre.
+
+**Mesuré sur un fil de 91 :** 91 lignes visibles → **30**, rapport 3,03. Le critère est « au moins divisé par 3 » ; il passe, de peu. Un ancien critère promettait « moins de 30 lignes » — il avait été retiré parce que replier la seule frontière ne peut pas le garantir sur une forêt large. La mesure confirme ce retrait.
+
+### Trois états, et la raison pour laquelle il en faut trois
+
+| État | Ce que c'est | Qui y revient |
+|---|---|---|
+| **initial** | l'état au chargement, replis natifs de HN compris | `revert()`, l'échec fermé |
+| **avant-spine** | l'état juste avant que le spine ne soit appliqué | le lien `fil entier` |
+| **spine** | la frontière repliée | le lien `fil principal`, la touche `s` |
+
+La distinction n'est pas cosmétique. Sans elle, replier une branche à la main puis lancer le spine et le défaire **rouvre** cette branche — le retour écrase un choix de lecture que personne n'a demandé d'annuler.
+
+### Les trois éléments neufs
+
+- **Commentaire replié** — une ligne : auteur, métadonnée, le compteur `[n more]` que HN fournit déjà, et le début du texte tronqué à 90 caractères, en gris méta à 13,5 px. *Tu sais ce que tu caches.* L'aperçu est inséré pour **tous** les commentaires et révélé par la classe `coll` que HN pose lui-même : aucun code ne tourne au moment du repli.
+- **Thread Spine** — un **lien texte** dans la méta du fil, jamais un bouton. HN n'a que des liens ; un bouton trahirait le vocabulaire du site. État actif en accent texte, jamais en orange pur.
+- **Barre de position** — 28 px, filet supérieur 1 px, 12 px de texte en gris méta, **alignée sur la colonne de contenu et non sur la fenêtre** : pleine largeur, elle se lit comme une barre d'état de navigateur. Visible seulement pendant la navigation clavier. 28 px sont réservés en bas de `#hnmain`, sinon elle couvre le dernier commentaire.
+
+### Le marqueur du commentaire actif
+
+**Un tiret de 3 × 14 px** en `--accent`, à gauche de la métadonnée. Le doc disait « bordure orange » ; le rendu a montré ce que ça donne sur un commentaire de sept paragraphes — une barre orange de 500 px. Vérifié : la marque est identique sur un commentaire d'une ligne et sur un de 1 486 caractères.
+
+### Clavier
+
+`j` / `k` déplacent, `c` replie, `s` bascule le Thread Spine, `Échap` sort. `Cmd`+`Entrée` envoie une réponse, `Cmd`+`I` met en italique.
+
+**Aucune touche n'existe tant qu'un champ a le focus** — `input`, `textarea`, `contenteditable`, ou n'importe quelle touche avec `Cmd` / `Ctrl` / `Alt`. Sans ce garde-fou, taper « jkjk » dans une réponse navigue dans le fil au lieu d'écrire.
+
+**Un commentaire masqué n'est pas une cible : `j` et `k` le sautent.** L'autre option — déplier l'ancêtre pour y aller — était défendable et a été écartée : déplier annulerait le repli que l'utilisateur vient de demander, ce qui est exactement l'inverse de ce que le Thread Spine sert à faire. *À reconsidérer à l'usage.*
+
+### Les contrôles de formulaire
+
+En thème sombre, le bouton `add comment` natif est un rectangle blanc au milieu d'une page noire. Il prend le fond de colonne et un cadre de 1 px.
+
+**Le cadre est en `--meta`, pas en `--rail`.** Le système n'a aucune surface : ces contrôles sont du texte dans un cadre de 1 px, et ce cadre est la **seule** chose qui les rend repérables. Il doit donc passer le plancher — `--meta` donne 5,09:1 en clair et 4,84:1 en sombre contre le fond de colonne, là où `--rail`, fait pour disparaître derrière le texte, tombe sous 1,5:1.
+
+**La famille de la zone de réponse n'est pas touchée.** HN la met en monospace délibérément. On corrige les couleurs, pas la voix.
+
+> [!warning] `/reply` et `/submit` restent natifs, et c'est structurel
+> T19 visait « aucun élément clair résiduel sur `/item`, `/reply`, `/submit` en mode sombre ». Impossible sans renoncer à T2 : ces deux pages n'ont pas de `#hnmain`, et c'est précisément ce qui met les formulaires hors d'atteinte par construction. T2 l'emporte — c'est un critère d'acceptation, T19 était un objectif. En sombre, `/reply` et `/submit` restent donc des pages claires.
+
 ## Motion
 
 **Aucune.** HN n'en a pas, un outil de lecture n'en a pas besoin, et la moindre transition entrerait en concurrence avec le texte. Pas d'exception.
@@ -323,6 +380,11 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Score du spine : taille × √(longueur relative)** | Le `n` brut désigne la querelle la plus peuplée ; le volume de texte brut désigne le monologue. La racine carrée amortit pour qu'un commentaire long ne batte pas une discussion. Départage par ordre du document. |
+| 2026-08-25 | **`j` / `k` sautent les commentaires masqués** | D10 laissait le choix entre sauter et déplier l'ancêtre. Déplier annulerait le repli qu'on vient de demander. À reconsidérer à l'usage. |
+| 2026-08-25 | **Trois états, deux instantanés** | `restaure()` vise l'état d'avant-spine, `revert()` l'état du chargement. Confondre les deux rouvre une branche que l'utilisateur avait repliée à la main. |
+| 2026-08-25 | **Cadre des contrôles en `--meta`** | `--rail` est fait pour disparaître (< 1,5:1) ; sur un contrôle sans surface, le cadre est le seul repère et doit passer 3:1. |
+| 2026-08-25 | **`/reply` et `/submit` restent natifs en sombre** | T19 le voulait, T2 l'interdit : ces pages n'ont pas de `#hnmain`, ce qui est exactement ce qui protège les formulaires. Le critère d'acceptation l'emporte sur l'objectif. |
 | 2026-08-25 | **Espace entre posts : 15 → 12 px** | Contradiction interne du fichier : 15 n'est pas un cran de l'échelle que la même section déclare exhaustive. La règle d'échelle l'emporte. |
 | 2026-08-25 | **`--rail-active` renommé `--accent`** | Le token portait déjà tout aplat orange du système — filet de navbar, rail actif, marqueur. Son nom n'en décrivait qu'un usage sur trois, et l'issue #1 § C écrivait déjà `var(--accent)`. Nombre de tokens inchangé : 16. |
 | 2026-08-25 | **Nom de l'auteur retiré de la liste** | Commodité, pas fonction. La ligne fusionnée n'a de place que pour ce sur quoi on décide de lire. |
@@ -334,5 +396,5 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 - **Mobile et iOS.** Hors périmètre par décision, pas par oubli.
 - **Les états de survol et les transitions.** Aucune animation dans ce projet.
 - **`/newest`, `/ask`, `/show`, `/jobs`, `/front`.** Même DOM supposé que `/news`, non vérifié.
-- **Les profondeurs supérieures à 4.** Le fil de référence n'allait pas plus loin.
+- **Les fils paginés.** HN pagine les très longs fils ; le spine serait alors calculé sur un arbre partiel. Non vérifié — il faudrait un fil de 500+.
 - **Le rendu réel dans Safari.** Toutes les captures viennent de Chromium headless. `-apple-system` y résout vers une police distincte, mesurée, mais ce n'est pas une preuve que Safari rend à l'identique.

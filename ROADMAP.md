@@ -122,25 +122,51 @@ Un détail a coûté la première version : sauvegarder `el.style[prop]` et le r
 
 ---
 
-## Phase 4 — le fil de commentaires
+## Phase 4 — le fil de commentaires ✅ **faite le 2026-08-25**
 
 Le cœur du projet.
 
-| | Tâche | Effort |
+| | Tâche | État |
 |---|---|---|
-| **T4** | `buildModel()` : un seul parcours produisant `{el, depth, n, textLen, parent, children}` | ~40 min |
-| **T5** | `collapse(tr, veutReplié)` **idempotent** — `a.togg` est une bascule, pas un setter | ~20 min |
-| **T6** | Replier la **frontière** (frères des nœuds du spine), jamais tous les non-spine | ~25 min |
-| **T7** | Thread Spine : descente gloutonne sur `n` pondéré par la longueur moyenne de `.commtext` | ~50 min |
-| **T8** | Extraire et porter 5-6 modules de [refined-hacker-news](https://github.com/plibither8/refined-hacker-news) (MIT) | ~45 min |
-| **T9** | Garde-fous clavier : `input` / `textarea` / `contenteditable`, et cible masquée | ~30 min |
-| **T16** | Les trois éléments neufs : commentaire replié, lien Thread Spine, barre de position | ~40 min |
-| **T17** | Formulaire de réponse replié derrière un lien | ~25 min |
-| **T18** | Marqueur du commentaire actif : tiret 3×14 px, pas un rail pleine hauteur | ~15 min |
-| **T19** | Habiller `input[type=submit]` et les boutons dans les deux thèmes | ~10 min |
-| **T20** | Barre de position alignée sur la colonne, pas sur la fenêtre | ~10 min |
+| **T4** | `buildModel()` : un seul parcours produisant `{el, depth, n, textLen, parent, children}` | ✅ 91 nœuds, profondeurs 0–8, un seul endroit connaît `img.width / 40` |
+| **T5** | `collapse(tr, veutReplié)` **idempotent** | ✅ deux appels à `true` ne dé-replient jamais |
+| **T6** | Replier la **frontière**, jamais tous les non-spine | ✅ 23 replis au lieu de 91 |
+| **T7** | Descente gloutonne sur `n` pondéré par la longueur moyenne | ✅ déterministe, chaîne parent-enfant 0>1>2>3>4>5>6 |
+| **T8** | Porter 5-6 modules de refined-hacker-news (MIT) | ✅ 5 modules, réécrits sur `buildModel()`, attribution dans `README.md` |
+| **T9** | Garde-fous clavier | ✅ `j` `c` `s` tapés dans le `textarea` ne font rien |
+| **T16** | Les trois éléments neufs | ✅ aperçu de commentaire replié, lien Thread Spine, barre de position |
+| **T17** | Formulaire de réponse replié derrière un lien | ✅ ~250 px repris en haut du fil |
+| **T18** | Marqueur du commentaire actif : tiret 3×14 px | ✅ identique sur un commentaire de 1 486 caractères |
+| **T19** | Habiller `input[type=submit]` et les boutons | ✅ sur `/item` — voir la réserve ci-dessous |
+| **T20** | Barre de position alignée sur la colonne | ✅ `112+1176` contre `112+1176` |
 
----
+**Le critère du Thread Spine passe, de peu.** 91 lignes visibles → **30**, rapport **3,03** contre 3,00 exigé. Le critère avait déjà été révisé une fois — la promesse initiale de « moins de 30 lignes » avait été retirée parce que replier la seule frontière ne peut pas la garantir sur une forêt large. La mesure confirme le retrait, et la marge est mince : sur un fil plus large, le rapport descendra sous 3.
+
+### T12 tranché, et il fallait trois états
+
+`restaure()` vise l'état d'**avant-spine**, `revert()` l'état du **chargement**. Confondre les deux fait que replier une branche à la main, lancer le spine, puis revenir **rouvre** cette branche. Vérifié dans les deux sens.
+
+### Trois bugs, dont un que seul un test de rendu pouvait voir
+
+| Symptôme | Cause |
+|---|---|
+| L'indentation restait à 40 px alors que douze règles CSS disaient 22 | **Un `/*` non fermé** dans la feuille. `node --check` ne voit rien — le CSS vit dans un template literal —, la feuille se charge sans erreur, et les douze règles suivantes disparaissent en silence. `test/regles.mjs` compte désormais les délimiteurs. |
+| `revert()` laissait 182 `style=""` dans le DOM | Écrire un style inline sur un élément qui n'avait **aucun** attribut `style`. Remplacé par douze règles de palier : zéro déclaration inline dans le fil, et le problème disparaît avec sa cause. |
+| Le marqueur du commentaire actif se mesurait à `auto × auto` | Bug **du test**, pas du code. `getComputedStyle` rend une vue **vivante** : lire `marque.width` après avoir retiré la classe rend l'état d'après, pas celui de la mesure. |
+
+### Ce qui a été décidé plutôt que demandé
+
+Trois points que la spec laissait ouverts, tranchés et documentés dans `DESIGN.md` — à rouvrir si le ressenti ne suit pas :
+
+1. **Le score du spine** est `taille × √(longueur relative)`. Le `n` brut désigne la querelle la plus peuplée, le volume brut le monologue le plus long.
+2. **`j` / `k` sautent** les commentaires masqués au lieu de déplier l'ancêtre. Déplier annulerait le repli qu'on vient de demander.
+3. **Le lien `[racine]`** n'apparaît qu'à partir de la profondeur 2. À la profondeur 1 la racine est la ligne juste au-dessus.
+
+> [!warning] T19 ne peut pas atteindre `/reply` et `/submit`, et c'est structurel
+> L'objectif était « aucun élément clair résiduel sur `/item`, `/reply`, `/submit` en mode sombre ». Ces deux pages n'ont pas de `#hnmain` — c'est exactement ce qui met les formulaires hors d'atteinte par construction (T2, critère d'acceptation n°10). Le critère l'emporte sur l'objectif : en sombre, `/reply` et `/submit` restent des pages claires.
+
+| Effort réel | ~2 h 30 |
+|---|---|
 
 ## Phase 5 — vérification et finition
 

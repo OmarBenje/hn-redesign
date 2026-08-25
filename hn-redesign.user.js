@@ -93,7 +93,9 @@ const CSS = `
    claire que la page. Hors #hnmain mais sous .${ROOT}, que le JS ne pose que
    si #hnmain existe — les formulaires restent intacts. */
 .${ROOT} body { background: var(--page); }
-.${ROOT} #hnmain { background: var(--col); }
+/* 28px reserves en bas : la barre de position est en position fixed et
+   couvrirait le dernier commentaire du fil sans cette reserve. */
+.${ROOT} #hnmain { background: var(--col); padding-bottom: 28px; }
 
 /* ------------------------------------------------------------ typographie
    Tracking : deux paliers. 0 sous 17 px, -0.012em au-dessus. La valeur
@@ -299,6 +301,151 @@ const CSS = `
 }
 .${ROOT} #hnmain tr.__row:focus-within .__hide { opacity: 1; }
 
+/* --------------------------------------------------------- le fil, phase 4
+   Indentation : 22px par niveau au lieu des 40 de HN. La largeur vit dans un
+   <img src=s.gif width=depth*40> en attribut de presentation, que le CSS bat.
+   Plancher de mesure a la profondeur 11 : au-dela l'indentation n'augmente
+   plus, sinon la mesure passe sous 420px. Le fil de reference monte a 8. */
+.${ROOT} #hnmain tr.athing.comtr td.ind { padding: 0 10px 0 0; cursor: pointer; }
+.${ROOT} #hnmain tr.athing.comtr.__d0 td.ind { padding: 0; }
+.${ROOT} #hnmain tr.athing.comtr td.ind img { height: 1px; }
+
+/* Douze regles litterales plutot que 91 styles inline. La largeur est un
+   attribut de presentation (<img width=depth*40>), donc le CSS la bat — mais
+   la valeur est par ligne. Une classe par palier resout ca sans ecrire une
+   seule declaration inline dans le fil, et rend le repli du plancher visible :
+   au-dela de __i11 la mesure passerait sous 420px, donc __i11 est un plafond. */
+.${ROOT} #hnmain tr.__i0 td.ind img { width: 0px; }
+.${ROOT} #hnmain tr.__i1 td.ind img { width: 11px; }
+.${ROOT} #hnmain tr.__i2 td.ind img { width: 33px; }
+.${ROOT} #hnmain tr.__i3 td.ind img { width: 55px; }
+.${ROOT} #hnmain tr.__i4 td.ind img { width: 77px; }
+.${ROOT} #hnmain tr.__i5 td.ind img { width: 99px; }
+.${ROOT} #hnmain tr.__i6 td.ind img { width: 121px; }
+.${ROOT} #hnmain tr.__i7 td.ind img { width: 143px; }
+.${ROOT} #hnmain tr.__i8 td.ind img { width: 165px; }
+.${ROOT} #hnmain tr.__i9 td.ind img { width: 187px; }
+.${ROOT} #hnmain tr.__i10 td.ind img { width: 209px; }
+.${ROOT} #hnmain tr.__i11 td.ind img { width: 231px; }
+
+/* Espacement : 16px entre freres, 12px entre parent et premier enfant. C'est
+   le seul geste hierarchique du systeme et il suffit — descendre coute moins
+   d'espace que passer au suivant, donc la subordination se lit avant meme que
+   l'oeil ait vu le rail. Les deux valeurs sont posees par le JS, qui seul
+   connait la profondeur du voisin. */
+.${ROOT} #hnmain tr.athing.comtr > td { padding-top: 16px; }
+.${ROOT} #hnmain tr.athing.comtr.__enfant > td { padding-top: 12px; }
+.${ROOT} #hnmain tr.athing.comtr.__racine > td { padding-top: 24px; }
+
+/* Le rail de profondeur. 1px, a indent MOINS 11 — au milieu du cran de 22, et
+   non colle au texte. La gouttiere fait donc (indent - 11) d'image, 10 de
+   padding et 1 de bordure : le total retombe sur indent exactement, et le
+   contenu ne bouge pas. T21 le fera exprimer la profondeur ; ici il exprime
+   l'imbrication. */
+.${ROOT} #hnmain tr.athing.comtr td.ind {
+  border-right: 1px solid var(--rail);
+}
+.${ROOT} #hnmain tr.athing.comtr.__d0 td.ind { border-right: none; }
+
+/* Metadonnee -> corps : 4px. HN pose margin-bottom:-10px en style inline sur
+   la div de comhead ; c'est le JS qui l'annule, reversiblement. */
+.${ROOT} #hnmain .comhead { position: relative; }
+
+/* T16.1 — le commentaire replie. Une ligne : auteur, debut du texte, et le
+   compteur n que HN fournit deja ([9 more]). Tu sais ce que tu caches.
+   L'apercu est insere pour TOUS les commentaires et revele par la classe
+   coll que HN pose lui-meme : aucun code ne tourne au moment du repli. */
+.${ROOT} #hnmain .__apercu { display: none; }
+.${ROOT} #hnmain tr.coll .__apercu {
+  display: inline;
+  font-size: 13.5px;
+  line-height: 22px;
+  color: var(--meta);
+}
+
+/* T18 — le marqueur du commentaire actif : un tiret de 3x14, pas un rail.
+   Une bordure pleine hauteur donne 500px d'orange sur un commentaire de sept
+   paragraphes. Rendu, vu, rejete. */
+.${ROOT} #hnmain tr.__actif .comhead::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 2px;
+  width: 3px;
+  height: 14px;
+  background: var(--accent);
+}
+.${ROOT} #hnmain tr.athing.comtr:focus { outline: none; }
+
+/* T16.2 — le lien Thread Spine. Un LIEN, pas un bouton : HN n'a que des
+   liens, un bouton trahirait le vocabulaire du site. Etat actif en accent
+   texte, jamais en orange pur — 2,81:1 en clair. */
+.${ROOT} #hnmain a.__spine { color: var(--meta); }
+.${ROOT} #hnmain a.__spine.__on { color: var(--accent-text); }
+
+/* T17 — le formulaire de reponse replie derriere un lien. Sur les quatre
+   captures de reference, le premier element sous le titre etait un champ vide
+   de 700px, avant le moindre commentaire. Environ 250px repris en haut de
+   chaque fil. Le formulaire natif reste intact, simplement replie. */
+.${ROOT} #hnmain form.__replie { display: none; }
+
+/* T16.3 + T20 — la barre de position. Alignee sur la COLONNE et non sur la
+   fenetre : pleine largeur, elle se lit comme une barre d'etat de navigateur.
+   Visible seulement quand la navigation clavier est active. */
+.${ROOT} #hnmain .__barre {
+  position: fixed;
+  bottom: 0;
+  height: 28px;
+  line-height: 28px;
+  box-sizing: border-box;
+  border-top: 1px solid var(--rail);
+  background: var(--col);
+  color: var(--meta);
+  font-size: 12px;
+  letter-spacing: .1px;
+  padding: 0 48px;
+  z-index: 9;
+}
+
+/* Les liens ajoutes parlent la langue de HN : gris meta, taille de
+   metadonnee, aucun bouton invente. « nouveau » est la seule exception —
+   il porte de l'information, donc il prend l'accent texte. */
+.${ROOT} #hnmain a.__racine-lien,
+.${ROOT} #hnmain a.__repondre { font-size: 12px; color: var(--meta); }
+.${ROOT} #hnmain .__neuf {
+  font-size: 12px;
+  letter-spacing: .1px;
+  color: var(--accent-text);
+  margin-right: 6px;
+}
+
+/* T19 — les controles de formulaire. En sombre, le bouton natif add comment
+   est un rectangle blanc au milieu d'une page noire. La famille de la zone de
+   texte n'est PAS touchee : HN la met en monospace deliberement, et la phase 2
+   a choisi de respecter ce choix. On corrige les couleurs, pas la voix. */
+.${ROOT} #hnmain input[type="submit"],
+.${ROOT} #hnmain button {
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--c00);
+  background: var(--col);
+  /* --meta et non --rail. Le systeme n'a aucune surface : ces controles sont
+     du texte dans un cadre de 1px, et ce cadre est la SEULE chose qui les rend
+     reperables. Il doit donc passer le plancher — --meta donne 5,09:1 en clair
+     et 4,84:1 en sombre contre le fond de colonne, la ou --rail, fait pour
+     disparaitre derriere le texte, tombe sous 1,5:1. */
+  border: 1px solid var(--meta);
+  border-radius: var(--radius);
+  padding: 4px 12px;
+}
+.${ROOT} #hnmain textarea,
+.${ROOT} #hnmain input[type="text"] {
+  color: var(--c00);
+  background: var(--col);
+  border: 1px solid var(--meta);
+  border-radius: var(--radius);
+}
+
 /* ----------------------------------------------------------------- focus
    :focus-visible et non :focus — sur un site fait de liens texte, un anneau
    a chaque clic serait du bruit permanent. outline et non border : l'anneau
@@ -318,10 +465,17 @@ const CSS = `
    apres revert(), caractere pour caractere. */
 const undo = [];
 
+/* Retirer une classe d'un element qui n'avait AUCUN attribut class y laisse
+   class="" — invisible a l'ecran, mais la comparaison de reversibilite le
+   voit, et elle a raison : le DOM n'est plus celui que HN a servi. */
 const addClass = (el, c) => {
   if (!el || el.classList.contains(c)) return;
+  const avaitAttribut = el.hasAttribute('class');
   el.classList.add(c);
-  undo.push(() => el.classList.remove(c));
+  undo.push(() => {
+    el.classList.remove(c);
+    if (!avaitAttribut) el.removeAttribute('class');
+  });
 };
 
 /* On sauvegarde l'ATTRIBUT style brut, pas la propriete. Repasser par
@@ -472,6 +626,468 @@ function fusionner() {
   });
 }
 
+
+/* ==========================================================================
+   Phase 4 — le fil de commentaires
+   ========================================================================== */
+
+/* ------------------------------------------------------------ T4 le modele
+   Un seul parcours produit tout ce dont les autres taches ont besoin. Et un
+   seul endroit dans le fichier connait la conversion largeur -> profondeur :
+   refined-hacker-news la duplique dans deux modules (img.width / 40), et les
+   deux copies peuvent diverger. HN sert aussi l'attribut indent, plus fiable
+   que la largeur d'une image qui peut ne pas etre chargee. */
+/* L'indentation elle-meme (22px par palier, HN natif : 40) vit dans la
+   feuille, en douze regles litterales. Ici ne reste que le plafond. */
+const PROFONDEUR_MAX = 11; /* au-dela, la mesure passerait sous 420px */
+
+const profondeurDe = tr => {
+  const ind = tr.querySelector('td.ind');
+  if (!ind) return 0;
+  const attr = ind.getAttribute('indent');
+  if (attr !== null && attr !== '') return parseInt(attr, 10) || 0;
+  const img = ind.querySelector('img');
+  return img ? Math.round(img.width / 40) : 0;
+};
+
+function buildModel() {
+  const rangs = [...document.querySelectorAll('#hnmain tr.athing.comtr')];
+  const racine = { el: null, depth: -1, n: rangs.length, textLen: 0, parent: null, children: [] };
+  const pile = [racine];
+  const liste = [];
+
+  for (const el of rangs) {
+    const depth = profondeurDe(el);
+    const togg = el.querySelector('a.togg');
+    const texte = el.querySelector('.commtext');
+    const noeud = {
+      el, togg, depth,
+      id: el.id,
+      n: togg ? (parseInt(togg.getAttribute('n'), 10) || 0) : 0,
+      textLen: texte ? texte.textContent.trim().length : 0,
+      parent: null,
+      children: [],
+    };
+    /* La pile est indexee par profondeur : pile[d] est le dernier noeud vu a
+       cette profondeur. Le parent d'un noeud de profondeur d est pile[d]. */
+    pile.length = depth + 1;
+    const parent = pile[depth] || racine;
+    noeud.parent = parent;
+    parent.children.push(noeud);
+    pile[depth + 1] = noeud;
+    liste.push(noeud);
+  }
+
+  /* Volume de texte du sous-arbre, en remontant : chaque noeud est vu apres
+     ses enfants puisque la liste est en ordre document. */
+  for (let i = liste.length - 1; i >= 0; i--) {
+    const noeud = liste[i];
+    noeud.volume = noeud.textLen + noeud.children.reduce((s, c) => s + c.volume, 0);
+    noeud.taille = 1 + noeud.children.reduce((s, c) => s + c.taille, 0);
+  }
+  racine.volume = racine.children.reduce((s, c) => s + c.volume, 0);
+  racine.taille = racine.children.reduce((s, c) => s + c.taille, 0);
+
+  return { racine, liste };
+}
+
+/* ----------------------------------------------------------- T5 le repli
+   a.togg est une BASCULE, pas un setter. Appeler click() sans lire l'etat
+   d'abord de-replie les commentaires que HN avait deja replies — la fixture
+   en contient toujours quelques-uns, morts ou replies par l'auteur. */
+const estReplie = noeud => !!noeud.el && noeud.el.classList.contains('coll');
+
+function collapse(noeud, veutReplie) {
+  if (!noeud.togg || estReplie(noeud) === veutReplie) return false;
+  noeud.togg.click();
+  return true;
+}
+
+/* ------------------------------------------------------------ T7 le spine
+   Descente gloutonne depuis une racine VIRTUELLE qui regroupe tous les
+   commentaires de profondeur 0. Sans ce point de depart explicite, deux
+   implementations legitimes donnent deux colonnes differentes.
+
+   Score = taille du sous-arbre, ponderee par la longueur moyenne de ses
+   commentaires rapportee a la moyenne du fil. Le n brut choisit la branche la
+   plus PEUPLEE, qui est souvent une querelle de mots ; le volume de texte brut
+   choisit le monologue le plus long. La racine carree amortit la ponderation
+   pour qu'un seul commentaire tres long ne batte pas une vraie discussion.
+
+   Egalites departagees par l'ordre du document : sans ca le spine change d'un
+   rechargement a l'autre sur la meme page. */
+function scoreDeBranche(noeud, moyenneFil) {
+  if (!noeud.taille) return 0;
+  const moyenne = noeud.volume / noeud.taille;
+  return noeud.taille * Math.sqrt(moyenne / (moyenneFil || 1));
+}
+
+function calculeSpine(modele) {
+  const { racine, liste } = modele;
+  if (!liste.length) return [];
+  const moyenneFil = racine.volume / (racine.taille || 1);
+  const chemin = [];
+  let courant = racine;
+  while (courant.children.length) {
+    let meilleur = null, meilleurScore = -1;
+    for (const enfant of courant.children) {
+      const sc = scoreDeBranche(enfant, moyenneFil);
+      if (sc > meilleurScore) { meilleurScore = sc; meilleur = enfant; }
+    }
+    chemin.push(meilleur);
+    courant = meilleur;
+  }
+  return chemin;
+}
+
+/* --------------------------------------------------------- T6 la frontiere
+   Replier les FRERES des noeuds du spine, jamais tous les non-spine. Replier
+   un parent cache deja toute sa descendance ; cliquer aussi les descendants
+   corrompt leur etat sans rien changer a l'ecran, et fait ~200 clics la ou 30
+   suffisent. Verifiable : rouvrir une branche apres coup rend ses enfants
+   dans leur etat d'origine. */
+function frontiere(chemin) {
+  const surLeSpine = new Set(chemin);
+  const bord = [];
+  for (const noeud of chemin) {
+    for (const frere of noeud.parent.children) {
+      if (!surLeSpine.has(frere)) bord.push(frere);
+    }
+  }
+  return bord;
+}
+
+/* -------------------------------------------------- T12 les trois etats */
+let modele = null;
+let spine = [];
+let spineActif = false;
+
+/* TROIS etats, et deux instantanes pour les tenir. La distinction n'est pas
+   cosmetique : sans elle, replier une branche a la main puis lancer le spine
+   et le defaire ROUVRE cette branche — le retour ecrase un choix de lecture
+   que personne n'a demande d'annuler.
+     initial      l'etat au chargement, replis natifs de HN compris.
+                  C'est la cible de revert(), l'echec ferme.
+     avant-spine  l'etat juste avant que le spine ne soit applique.
+                  C'est la cible de restaure(), le bouton « fil entier ».
+     spine        la frontiere repliee. */
+let etatInitial = null;
+let etatAvantSpine = null;
+
+const snapshot = () => new Set(modele.liste.filter(estReplie).map(n => n.id));
+const repose = etat => { for (const noeud of modele.liste) collapse(noeud, etat.has(noeud.id)); };
+
+function appliqueSpine() {
+  if (spineActif) return;
+  etatAvantSpine = snapshot();
+  spine = calculeSpine(modele);
+  for (const noeud of frontiere(spine)) collapse(noeud, true);
+  spineActif = true;
+  majLienSpine();
+  majBarre();
+}
+
+function restaure() {
+  if (!spineActif) return;
+  repose(etatAvantSpine);
+  spineActif = false;
+  majLienSpine();
+  majBarre();
+}
+
+/* ------------------------------------------------------- T9 le clavier
+   Trois garde-fous, et le premier est le plus important : tant qu'un champ a
+   le focus, aucune touche ne nous appartient. Sans lui, taper « jkjk » dans
+   une reponse navigue dans le fil au lieu d'ecrire. */
+const estSaisie = el => !!el && (
+  el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
+  el.tagName === 'SELECT' || el.isContentEditable
+);
+
+/* Un commentaire masque n'est pas une cible. D10 laissait deux options —
+   sauter, ou deplier l'ancetre. On SAUTE : deplier annulerait le repli que
+   l'utilisateur vient de demander, et c'est tout l'objet du Thread Spine. */
+const estVisible = noeud => !!noeud.el && !noeud.el.classList.contains('noshow');
+
+let actif = -1;
+
+function vaVers(index) {
+  const l = modele.liste;
+  if (!l.length) return;
+  const borne = Math.max(0, Math.min(index, l.length - 1));
+  if (actif >= 0 && l[actif]) l[actif].el.classList.remove('__actif');
+  actif = borne;
+  const noeud = l[actif];
+  noeud.el.classList.add('__actif');
+  noeud.el.scrollIntoView({ block: 'center' });
+  majBarre();
+}
+
+function bouge(sens) {
+  const l = modele.liste;
+  let i = actif;
+  do { i += sens; } while (i >= 0 && i < l.length && !estVisible(l[i]));
+  if (i < 0 || i >= l.length) return;
+  vaVers(i);
+}
+
+function surTouche(e) {
+  if (estSaisie(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+  const l = modele.liste;
+  switch (e.key) {
+    case 'j':
+      if (actif < 0) { const i = l.findIndex(estVisible); if (i >= 0) vaVers(i); }
+      else bouge(1);
+      break;
+    case 'k': bouge(-1); break;
+    case 'c': if (actif >= 0) { collapse(l[actif], !estReplie(l[actif])); majBarre(); } break;
+    case 's': spineActif ? restaure() : appliqueSpine(); break;
+    case 'Escape':
+      if (actif >= 0) { l[actif].el.classList.remove('__actif'); actif = -1; majBarre(); }
+      return;
+    default: return;
+  }
+  e.preventDefault();
+}
+
+/* ----------------------------------------- T16.3 + T20 la barre de position
+   Alignee sur la colonne de contenu et non sur la fenetre. Pleine largeur,
+   elle se lit comme une barre d'etat de navigateur, pas comme une partie de
+   la page. Visible seulement pendant la navigation clavier. */
+let barre = null;
+
+function majBarre() {
+  if (!barre) return;
+  if (actif < 0) { barre.style.display = 'none'; return; }
+  const noeud = modele.liste[actif];
+  const visibles = modele.liste.filter(estVisible).length;
+  const rang = modele.liste.slice(0, actif + 1).filter(estVisible).length;
+  const r = document.querySelector('#hnmain').getBoundingClientRect();
+  barre.style.display = 'block';
+  barre.style.left = r.left + 'px';
+  barre.style.width = r.width + 'px';
+  barre.textContent = `commentaire ${rang} / ${visibles}`
+    + `  ·  profondeur ${noeud.depth}`
+    + (spineActif ? '  ·  fil principal' : '')
+    + '  ·  j k deplacer, c replier, s fil principal, esc sortir';
+}
+
+/* --------------------------------------------------------- mise en page */
+let lienSpine = null;
+
+function majLienSpine() {
+  if (!lienSpine) return;
+  lienSpine.classList.toggle('__on', spineActif);
+  lienSpine.textContent = spineActif ? 'fil entier' : 'fil principal';
+}
+
+function habilleFil() {
+  modele = buildModel();
+  if (!modele.liste.length) return;
+  etatInitial = snapshot();
+
+  modele.liste.forEach((noeud, i) => {
+    const { el, depth } = noeud;
+
+    /* Indentation a 22px, par une classe de palier — voir la feuille. */
+    addClass(el, '__i' + Math.min(depth, PROFONDEUR_MAX));
+    if (depth === 0) addClass(el, '__d0');
+
+    /* 16px entre freres, 12px entre parent et premier enfant, 24px entre deux
+       fils racine. Seul le JS connait la profondeur du voisin precedent. */
+    const precedent = modele.liste[i - 1];
+    if (!precedent) addClass(el, '__racine');
+    else if (depth > precedent.depth) addClass(el, '__enfant');
+    else if (depth === 0) addClass(el, '__racine');
+
+    /* HN pose margin-bottom:-10px en style inline sur la div de comhead, ce
+       qui colle la metadonnee au corps. 4px, comme le dit DESIGN.md. */
+    const tete = el.querySelector('td.default > div');
+    if (tete && tete.style.marginBottom) setStyle(tete, 'marginBottom', '4px');
+
+    /* T16.1 — l'apercu du commentaire replie. Insere pour tous, revele par la
+       classe coll que HN pose lui-meme : rien ne tourne au moment du repli. */
+    const comhead = el.querySelector('.comhead');
+    const texte = el.querySelector('.commtext');
+    if (comhead && texte) {
+      const brut = texte.textContent.trim().replace(/\s+/g, ' ');
+      const apercu = document.createElement('span');
+      apercu.className = '__apercu';
+      apercu.textContent = ' ' + (brut.length > 90 ? brut.slice(0, 90) + '…' : brut);
+      insere(comhead, apercu, null);
+    }
+
+    /* Le tr doit pouvoir recevoir le focus pour que :focus-within fonctionne
+       et que les lecteurs d'ecran suivent la navigation J/K. */
+    if (!el.hasAttribute('tabindex')) {
+      el.setAttribute('tabindex', '-1');
+      undo.push(() => el.removeAttribute('tabindex'));
+    }
+  });
+
+  /* T16.2 — le lien Thread Spine, dans la meta du fil. Un lien, pas un
+     bouton : HN n'a que des liens. */
+  const meta = document.querySelector('#hnmain .fatitem .subline');
+  if (meta) {
+    const sep = document.createTextNode(' | ');
+    lienSpine = document.createElement('a');
+    lienSpine.className = '__spine';
+    lienSpine.href = 'javascript:void(0)';
+    lienSpine.textContent = 'fil principal';
+    lienSpine.addEventListener('click', () => { spineActif ? restaure() : appliqueSpine(); });
+    insere(meta, sep, null);
+    insere(meta, lienSpine, null);
+  }
+
+  /* T17 — le formulaire de reponse replie derriere un lien. */
+  const form = document.querySelector('#hnmain form[action="comment"]');
+  if (form) {
+    const lien = document.createElement('a');
+    lien.className = '__repondre';
+    lien.href = 'javascript:void(0)';
+    lien.textContent = 'repondre';
+    lien.addEventListener('click', () => {
+      form.classList.remove('__replie');
+      lien.style.display = 'none';
+      const zone = form.querySelector('textarea');
+      if (zone) zone.focus();
+    });
+    addClass(form, '__replie');
+    insere(form.parentNode, lien, form);
+  }
+
+  /* T16.3 — la barre de position. */
+  barre = document.createElement('div');
+  barre.className = '__barre';
+  barre.style.display = 'none';
+  insere(document.querySelector('#hnmain'), barre, null);
+
+  document.addEventListener('keydown', surTouche, true);
+  window.addEventListener('resize', majBarre);
+  undo.push(() => {
+    document.removeEventListener('keydown', surTouche, true);
+    window.removeEventListener('resize', majBarre);
+    if (actif >= 0 && modele.liste[actif]) modele.liste[actif].el.classList.remove('__actif');
+    /* revert() vise l'etat INITIAL, pas l'etat d'avant-spine : l'echec ferme
+       doit rendre la page telle qu'elle a ete servie, pas telle qu'elle etait
+       il y a trois clics. */
+    repose(etatInitial);
+    spineActif = false;
+    actif = -1; barre = null; lienSpine = null; modele = null; spine = []; spineActif = false;
+  });
+
+  portsRefinedHN();
+}
+
+/* ------------------------------------------------------------ T8 les ports
+   Cinq modules de refined-hacker-news (Mihir Chaturvedi, MIT), reecrits pour
+   lire buildModel() au lieu de refaire chacun leur propre querySelectorAll —
+   c'est la duplication de img.width / 40 qui a motive T4. Attribution dans
+   README.md. */
+function portsRefinedHN() {
+  /* 1. click-comment-indent-to-toggle — cliquer la gouttiere replie. Passe
+        par collapse(), donc idempotent, ce que l'original n'etait pas. */
+  for (const noeud of modele.liste) {
+    const ind = noeud.el.querySelector('td.ind');
+    if (!ind || !noeud.togg) continue;
+    const clic = () => collapse(noeud, !estReplie(noeud));
+    ind.addEventListener('click', clic);
+    undo.push(() => ind.removeEventListener('click', clic));
+  }
+
+  /* 2. collapse-root-comment — replier le fil racine depuis n'importe lequel
+        de ses descendants. L'original remontait le DOM ; le modele donne le
+        parent directement. */
+  for (const noeud of modele.liste) {
+    /* Pas avant la profondeur 2 : a la profondeur 1 la racine est la ligne
+       juste au-dessus, et un lien de plus dans la comhead coute plus qu'il ne
+       rapporte. Le lien existe pour quand on est perdu, pas par symetrie. */
+    if (noeud.depth < 2) continue;
+    let racine = noeud;
+    while (racine.parent && racine.parent.depth >= 0) racine = racine.parent;
+    const comhead = noeud.el.querySelector('.comhead .navs') || noeud.el.querySelector('.comhead');
+    if (!comhead) continue;
+    const lien = document.createElement('a');
+    lien.className = '__racine-lien';
+    lien.href = 'javascript:void(0)';
+    lien.textContent = ' [racine]';
+    lien.addEventListener('click', () => {
+      collapse(racine, true);
+      racine.el.scrollIntoView({ block: 'start' });
+    });
+    insere(comhead, lien, null);
+  }
+
+  /* 3. backticks-to-monospace — les backticks deviennent du code. L'innerHTML
+        d'origine est garde tel quel pour l'annulation. */
+  const codeRe = /`([^`\n]+)`/g;
+  for (const noeud of modele.liste) {
+    const texte = noeud.el.querySelector('.commtext');
+    if (!texte || !codeRe.test(texte.innerHTML)) continue;
+    codeRe.lastIndex = 0;
+    const avant = texte.innerHTML;
+    texte.innerHTML = avant.replace(codeRe, '<code>$1</code>');
+    undo.push(() => { texte.innerHTML = avant; });
+  }
+
+  /* 4. highlight-unread-comment — marquer ce qui est arrive depuis la
+        derniere visite. localStorage au lieu de browser.storage.local, qui
+        n'existe pas dans un userscript en @grant none. Rien n'est marque a la
+        premiere visite : sans point de comparaison, tout serait neuf. */
+  try {
+    const CLE = 'hn-redesign-lu';
+    const id = new URLSearchParams(location.search).get('id');
+    if (id) {
+      const tout = JSON.parse(localStorage.getItem(CLE) || '{}');
+      const maintenant = Date.now();
+      for (const [k, v] of Object.entries(tout)) if (v.expire < maintenant) delete tout[k];
+      const vus = new Set((tout[id] && tout[id].ids) || []);
+      const ids = modele.liste.map(n => n.id);
+      if (vus.size) {
+        for (const noeud of modele.liste) {
+          if (vus.has(noeud.id)) continue;
+          const comhead = noeud.el.querySelector('.comhead');
+          if (!comhead) continue;
+          const marque = document.createElement('span');
+          marque.className = '__neuf';
+          marque.textContent = ' nouveau';
+          insere(comhead, marque, comhead.firstChild);
+        }
+      }
+      tout[id] = { expire: (tout[id] && tout[id].expire) || maintenant + 3 * 24 * 3600 * 1000,
+                   ids: [...new Set([...ids, ...vus])] };
+      localStorage.setItem(CLE, JSON.stringify(tout));
+    }
+  } catch (err) {
+    /* Navigation privee, quota plein : le reste du script continue. */
+  }
+
+  /* 5. key-bindings-on-input-fields — Cmd+Entree envoie, Cmd+I met en
+        italique. C'est le pendant de T9 : dans un champ, les touches
+        appartiennent au champ, sauf avec un modificateur explicite. */
+  const surChamp = e => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    const el = e.target;
+    if (el.tagName !== 'TEXTAREA' && el.tagName !== 'INPUT') return;
+    if (e.key === 'Enter') { if (el.form) el.form.submit(); e.preventDefault(); }
+    else if (e.key === 'i') {
+      const { value, selectionStart: a, selectionEnd: b } = el;
+      const sel = value.slice(a, b);
+      if (value[a - 1] === '*' && value[b] === '*') {
+        el.value = value.slice(0, a - 1) + sel + value.slice(b + 1);
+        el.selectionStart = a - 1; el.selectionEnd = b - 1;
+      } else {
+        el.value = value.slice(0, a) + '*' + sel + '*' + value.slice(b);
+        el.selectionStart = a + 1; el.selectionEnd = b + 1;
+      }
+      e.preventDefault();
+    }
+  };
+  document.addEventListener('keydown', surChamp, true);
+  undo.push(() => document.removeEventListener('keydown', surChamp, true));
+}
+
+
 function apply() {
   if (!document.querySelector('#hnmain')) return false;
   const style = document.createElement('style');
@@ -481,6 +1097,7 @@ function apply() {
   document.documentElement.classList.add(ROOT);
   navbar();
   fusionner();
+  habilleFil();
   return true;
 }
 
@@ -499,4 +1116,11 @@ try {
 }
 
 /* Interrupteur a la volee, pour comparer avant/apres sans desinstaller. */
-window.hnRedesign = { apply, revert, ROOT, CSS };
+window.hnRedesign = {
+  apply, revert, ROOT, CSS,
+  /* exposes pour les tests de rendu et pour la console */
+  get modele() { return modele; },
+  get spine() { return spine; },
+  buildModel, collapse, calculeSpine, frontiere,
+  appliqueSpine, restaure, estReplie, estVisible,
+};
