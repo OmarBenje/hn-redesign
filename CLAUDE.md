@@ -35,7 +35,7 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
 9. **Le fichier est evalue dans la portee globale de la PAGE.** Userscript `@grant none` et content script `world: MAIN`, meme modele. Sans l'IIFE, une trentaine d'identifiants — `ROOT`, `apply`, `collapse` — atterrissent sur le global de HN. Et si le fichier est evalue deux fois dans le meme document, le second `const ROOT` jette `Identifier has already been declared` et **tout s'arrete** : c'est exactement ce qui est arrive au premier chargement de l'extension Chrome. Le garde-fou `if (window.hnRedesign) return;` rend la double injection inoffensive.
 
-10. **La vraie page a une CSP ; les fixtures non.** HN sert `img-src 'self' https://account.ycombinator.com`, donc les favicons Google sont bloques — dans Chrome comme dans Safari. Un fichier `file://` ne porte aucun en-tete, donc **aucune fixture ne peut montrer ca**. Regle generale : ce qui depend d'un en-tete de reponse ne se teste pas sur une fixture locale.
+10. **La vraie page a une CSP ; les fixtures non.** HN sert `img-src 'self' https://account.ycombinator.com`. C'est ce qui a tue le favicon de domaine, retire depuis : il ne s'affichait jamais en production, dans aucun des deux navigateurs. Un fichier `file://` ne porte aucun en-tete, donc **aucune fixture ne peut montrer ca**. Regle generale : ce qui depend d'un en-tete de reponse ne se teste pas sur une fixture locale — et le projet est desormais a **zero requete reseau**, ce qui est le plus simple moyen de ne plus jamais rencontrer le probleme.
 
 ## Contraintes de la machine
 

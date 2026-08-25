@@ -185,15 +185,12 @@ taille = 15,5 + (score / score_max)^0.45 × 3,5      →  15,5 px à 19 px
 
 L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1186 points écraserait tout le reste. **Le plancher à 15,5 px est une contrainte** : aucun titre ne doit descendre sous la taille de lecture. Une version antérieure descendait à 14,5 px et enterrait un Show HN à 9 points — exactement le genre de post neuf qui a besoin d'être vu.
 
-**2. Favicon du domaine.** `https://www.google.com/s2/favicons?sz=32&domain=<sitestr>`, 14×14, `border-radius: 2px`. Le domaine est déjà dans le DOM sous `span.sitestr`.
-**Repli obligatoire :** 4 domaines sur 30 n'ont pas de favicon chez Google. Sans `onerror` qui pose `visibility:hidden`, l'alignement des titres devient irrégulier. Ne jamais `display:none` — l'espace doit rester réservé.
-
-> [!warning] Sur la vraie page, aucun favicon ne charge — vérifié le 2026-08-25
-> Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com`. Les 30 requêtes vers `google.com/s2/favicons` sont **bloquées par le navigateur**, dans Chrome comme dans Safari. Ce n'est pas un bug du script, et **aucune fixture locale ne pouvait le montrer** : un fichier `file://` ne porte pas d'en-tête de réponse. Il a fallu charger l'extension sur `news.ycombinator.com` pour le voir.
+> [!info] Il n'y a pas de favicon de domaine — retiré le 2026-08-25
+> Le système en a porté un, tiré de `google.com/s2/favicons`. **Il ne s'affichait jamais sur la vraie page** : Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com` et bloque les 30 requêtes, dans Chrome comme dans Safari. Aucune fixture locale ne pouvait le montrer — un fichier `file://` ne porte pas d'en-tête de réponse.
 >
-> **La règle « jamais `display:none` » est amendée** : elle existe pour éviter un alignement *irrégulier*. Quand **toutes** les images échouent, l'alignement est régulier de toute façon, et réserver 22 px par ligne pour une gouttière qui ne montrera jamais rien est une dette pure. Le script pose alors `__sans-fav` sur la racine et replie la gouttière. Mesuré sur la vraie page : les 30 lignes tiennent toujours exactement 32 px.
+> Un repli avait d'abord été ajouté (gouttière repliée quand tout échoue). Il a été **retiré à son tour** : du code qui ne s'exécute jamais utilement en production est du code mort, même quand il dégrade proprement. Le domaine reste lisible en toutes lettres dans `.sitebit`, où HN le met déjà.
 >
-> Les récupérer demanderait de relâcher la CSP de HN via `declarativeNetRequest`. C'est une décision de sécurité, pas de design : non prise.
+> **Effet de bord retrouvé : zéro requête réseau.** C'était vrai de la typographie, ce ne l'était plus de la liste. Ça l'est de nouveau — mesuré sur la vraie page, 0 requête sortante et 0 message de console.
 
 **3. Hiérarchie de la ligne de métadonnées.** Le nombre de commentaires est **la seule chose colorée** de la ligne (`--accent-text`) : c'est là qu'on clique. Le score est en `--c2` et en gras, en chiffres tabulaires. `hide`, `past`, `favorite` restent en gris méta. L'âge reste en gris méta.
 
@@ -201,7 +198,7 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 
 ### La ligne fusionnée — structure livrée
 
-`[favicon 14] [titre 15,5–19 px] [(domaine)] [score · âge · N comments]`, le tout sur **une** ligne de 32 px. La seconde `<tr>` passe en `display: none` ; ses nœuds utiles sont **clonés**, jamais déplacés — les scripts de HN les référencent encore. Les clones perdent leur `id` : deux `#score_<n>` dans le même document et `getElementById` renvoie le clone.
+`[titre 15,5–19 px] [(domaine)] [score · âge · N comments]`, le tout sur **une** ligne de 32 px. La seconde `<tr>` passe en `display: none` ; ses nœuds utiles sont **clonés**, jamais déplacés — les scripts de HN les référencent encore. Les clones perdent leur `id` : deux `#score_<n>` dans le même document et `getElementById` renvoie le clone.
 
 Deux choses cessent d'être visibles, et restent dans le DOM :
 
@@ -209,7 +206,7 @@ Deux choses cessent d'être visibles, et restent dans le DOM :
 - **Le nom de l'auteur** — abandon assumé. Commodité, pas fonction.
 
 > [!warning] Le titre à 32 px ne tenait pas sans un troisième réglage
-> Le calcul disait 20 px de ligne plus 2 × 6 px de padding = 32. Le rendu donnait **34**. Alignés sur la ligne de base, le titre à 16,5 px et le strut de la `.titleline` à 13,3 px ne partagent pas la même, et le descendant du strut ajoutait 2 px. `vertical-align: middle` sur **tous** les enfants de `.titleline` — pas seulement le favicon — recentre tout sur le strut et la boîte retombe à 20 px exactement, pour les 30 lignes.
+> Le calcul disait 20 px de ligne plus 2 × 6 px de padding = 32. Le rendu donnait **34**. Alignés sur la ligne de base, le titre à 16,5 px et le strut de la `.titleline` à 13,3 px ne partagent pas la même, et le descendant du strut ajoutait 2 px. `vertical-align: middle` sur **tous** les enfants de `.titleline` recentre tout sur le strut et la boîte retombe à 20 px exactement, pour les 30 lignes.
 
 ## Navbar
 
@@ -269,7 +266,7 @@ L'**indentation à 22 px** rend 180 px de mesure sur un fil profondeur 10.
 - **Colonne :** 880 px, centrée.
 - **Mesure de texte :** 660 px à la profondeur 0. **Bord droit fixe** : c'est l'indentation qui mange la gauche.
 - **Plancher de mesure :** 420 px. Au-delà de la profondeur 11, l'indentation cesse d'augmenter.
-- **Border radius : une seule valeur dans tout le projet, `--radius: 2px`.** Le système n'a aucune surface — ni carte, ni panneau, ni bouton — donc deux candidats seulement : le favicon de domaine et l'anneau de focus. Les deux prennent la même valeur. C'est aussi ce qui fait passer le lint de cohérence (T25 : ≤ 1 rayon distinct).
+- **Border radius : une seule valeur dans tout le projet, `--radius: 2px`.** Le système n'a aucune surface — ni carte, ni panneau. Trois usages seulement : l'anneau de focus, le cadre des boutons et celui de la zone de réponse. Tous prennent la même valeur, et c'est ce qui fait passer le lint de cohérence (T25 : ≤ 1 rayon distinct).
 
 ### Densité — contrainte dure
 
@@ -393,9 +390,9 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | ~~**Interligne du corps 24 → 23 px**~~ | ~~SF coûte 46 lignes de plus que Seravek. 23 px rend le commentaire perdu : 11 par écran.~~ **Superseded le 2026-08-25** — la densité ne dépend pas de l'interligne, voir la ligne suivante. |
 | 2026-08-25 | **Interligne du corps → 22 px**, et la densité corrigée | Re-mesuré au DOM : 15 commentaires entamés à 22, 23 **et** 24 px. L'argument « un pixel vaut un commentaire » était faux, issu d'un comptage à l'œil. 22 px se justifie autrement : −935 px de défilement, ratio 1,47, densité inchangée. Plancher corrigé de 11 à 14 commentaires entiers, de 25 à 24 posts. |
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
-| 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Deux candidats — favicon, anneau de focus — et la même valeur pour les deux. Satisfait le budget du lint T25. |
+| 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Anneau de focus et cadres de formulaire, une seule valeur pour tous. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
-| 2026-08-25 | **Gouttière de favicon repliée quand tout échoue** | La CSP de HN bloque les 30 requêtes. Réserver 22 px pour du vide est une dette ; l'alignement reste régulier puisque rien ne charge. Amende la règle « jamais `display:none` », sans la contredire. |
+| 2026-08-25 | **Favicon de domaine retiré** | La CSP de HN bloque les 30 requêtes ; il ne s'affichait jamais en production. Le repli « replier la gouttière » a été retiré avec lui : du code qui ne sert jamais utilement est mort, même quand il dégrade proprement. Rend au projet ses **zéro requête réseau**. |
 | 2026-08-25 | **Un trait de rail par ancêtre** | Un trait unique n'exprime que l'imbrication ; le nombre de traits exprime la profondeur. Une règle de fond remplace douze règles de largeur. |
 | 2026-08-25 | **Thème à trois états, `auto` par défaut** | `auto` suit l'heure et couvre le cas courant. Le lien affiche l'état, pas l'action. |
 | 2026-08-25 | **Score du spine : taille × √(longueur relative)** | Le `n` brut désigne la querelle la plus peuplée ; le volume de texte brut désigne le monologue. La racine carrée amortit pour qu'un commentaire long ne batte pas une discussion. Départage par ordre du document. |
@@ -406,7 +403,7 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Espace entre posts : 15 → 12 px** | Contradiction interne du fichier : 15 n'est pas un cran de l'échelle que la même section déclare exhaustive. La règle d'échelle l'emporte. |
 | 2026-08-25 | **`--rail-active` renommé `--accent`** | Le token portait déjà tout aplat orange du système — filet de navbar, rail actif, marqueur. Son nom n'en décrivait qu'un usage sur trois, et l'issue #1 § C écrivait déjà `var(--accent)`. Nombre de tokens inchangé : 16. |
 | 2026-08-25 | **Nom de l'auteur retiré de la liste** | Commodité, pas fonction. La ligne fusionnée n'a de place que pour ce sur quoi on décide de lire. |
-| 2026-08-25 | **La liste entre dans le périmètre** | Pondération par score, favicon avec repli, hiérarchie de la ligne méta, et préservation de `a:visited`. |
+| 2026-08-25 | **La liste entre dans le périmètre** | Pondération par score, hiérarchie de la ligne méta, et préservation de `a:visited`. |
 
 ## Ce que ce fichier ne couvre pas
 

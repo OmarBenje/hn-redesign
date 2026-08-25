@@ -11,7 +11,7 @@
 > [!warning] Deux choses que seule la vraie page a montrées
 > **1. Le premier chargement de l'extension a échoué** sur `Uncaught SyntaxError: Identifier 'addClass' has already been declared`. Le fichier est évalué dans la portée globale de la page ; une seconde évaluation dans le même document tue tout. Le script vit désormais dans une IIFE avec un garde-fou `if (window.hnRedesign) return;` — ce qui règle aussi la fuite de ~30 identifiants dans le global de HN.
 >
-> **2. Les favicons de domaine ne chargent pas.** HN sert `img-src 'self' https://account.ycombinator.com` : les 30 requêtes sont bloquées, dans Chrome comme dans Safari. **Aucune fixture ne pouvait le montrer** — un fichier `file://` ne porte pas d'en-tête. Le repli existant a été étendu : quand tout échoue, la gouttière est repliée.
+> **2. Les favicons de domaine ne chargeaient pas.** HN sert `img-src 'self' https://account.ycombinator.com` : les 30 requêtes étaient bloquées, dans Chrome comme dans Safari. **Aucune fixture ne pouvait le montrer** — un fichier `file://` ne porte pas d'en-tête. La fonctionnalité a été **retirée** (T11), pas rafistolée : elle ne s'affichait jamais en production. Le projet retrouve ses zéro requête réseau.
 
 ---
 
@@ -103,7 +103,7 @@ L'écran où l'on décide quoi lire.
 |---|---|---|
 | **T23** | Ligne fusionnée à 32 px : titre et métadonnée sur une ligne, `hide` restauré au survol | ✅ **32 px pour les 30 lignes**, 30 posts entiers, dernier à 1376 px sur 1500 |
 | **T24** | Navbar filet orange : 50 px, `box-sizing: border-box`, séparateurs `\|` retirés | ✅ 50 px, filet 3 px, 9 liens, 0 séparateur |
-| **T11** | Favicon de domaine depuis `span.sitestr` | ✅ absorbée par T23, avec le repli `visibility:hidden` |
+| **T11** | Favicon de domaine depuis `span.sitestr` | ⛔ **retirée le 2026-08-25** — la CSP de HN la rend inopérante en production |
 
 Repères : HN natif 30 posts par écran à 30 px de ligne, mais en Verdana 10 px. Le design initial était à 58 px et 24 posts. **La cible de 30 posts est atteinte en typographie lisible.**
 
@@ -233,7 +233,7 @@ Ils ne couvrent **pas** : le focus, `scrollIntoView`, la navigation `J`/`K`, le 
 |---|---|---|
 | **T15** (version d'origine) | **réécrite** | Reposait sur Charter. Le serif a été rendu sur le vrai fil puis rejeté. Cinq candidates mesurées avant SF. |
 | **T13** (version d'origine) | **corrigée** | Annonçait 14 tokens, il y en a 16. |
-| **T11** | **absorbée par T23** | Le favicon fait partie de la ligne fusionnée, avec son repli obligatoire — 4 domaines sur 30 n'en ont pas. |
+| **T11** | **retirée** | Absorbée par T23, puis supprimée : `img-src 'self'` sur HN bloque les requêtes vers Google, donc le favicon ne s'affichait jamais sur la vraie page. Le domaine reste lisible en toutes lettres. |
 
 ---
 

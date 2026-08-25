@@ -290,26 +290,12 @@ const CSS = `
   color: var(--meta); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 .${ROOT} #hnmain tr.__row .titleline { display: block; line-height: 20px; }
-/* vertical-align: middle sur TOUS les enfants, et pas seulement le favicon.
-   Alignes sur la ligne de base, le titre a 16,5px et le strut a 13,3px ne
-   partagent pas la meme, et le descendant du strut ajoutait 2px : la ligne
-   mesurait 34px au lieu de 32. Centres sur le strut, la boite retombe a 20px
-   exactement, pour les 30 lignes. Mesure, pas intuition. */
+/* vertical-align: middle sur TOUS les enfants de la titleline. Alignes sur la
+   ligne de base, le titre a 16,5px et le strut a 13,3px ne partagent pas la
+   meme, et le descendant du strut ajoutait 2px : la ligne mesurait 34px au
+   lieu de 32. Centres sur le strut, la boite retombe a 20px exactement, pour
+   les 30 lignes. Mesure, pas intuition. */
 .${ROOT} #hnmain tr.__row .titleline > * { vertical-align: middle; }
-/* 4 domaines sur 30 n'ont pas de favicon chez Google. L'espace reste reserve
-   par visibility:hidden — un display:none desalignerait un titre sur sept.
-
-   Sauf quand ils echouent TOUS. Hacker News sert
-   Content-Security-Policy: img-src 'self' https://account.ycombinator.com
-   et bloque donc les 30 requetes. La regle « ne jamais display:none » existe
-   pour eviter un alignement IRREGULIER ; quand rien ne charge, l'alignement
-   est regulier de toute facon, et reserver 22px par ligne pour du vide serait
-   payer une gouttiere qui ne montre jamais rien. */
-.${ROOT} #hnmain .__fav {
-  width: 14px; height: 14px; border-radius: var(--radius);
-  vertical-align: -2px; margin-right: 8px;
-}
-.${ROOT}.__sans-fav #hnmain .__fav { display: none; }
 .${ROOT} #hnmain .__m {
   margin-left: 12px; font-size: 12px; letter-spacing: .1px;
   color: var(--meta); white-space: nowrap;
@@ -620,10 +606,6 @@ const scoreDe = tr => {
   return s ? parseInt(s.textContent, 10) || 0 : 0;
 };
 
-/* Si les 30 requetes de favicon echouent — c'est le cas sur la vraie page,
-   la CSP de HN les bloque —, la gouttiere de 22px ne montrera jamais rien. */
-const compteFav = { demandes: 0, echecs: 0 };
-
 function fusionner() {
   /* Le garde-fou .fatitem. tr.athing.submission existe sur /news ET sur
      /item — 30 lignes d'un cote, 1 de l'autre. Seul /item l'enveloppe dans
@@ -647,24 +629,11 @@ function fusionner() {
 
     addClass(tr, '__row');
 
-    /* favicon — le domaine est deja dans le DOM sous .sitestr */
-    const domaine = titleline.querySelector('.sitestr');
-    const img = document.createElement('img');
-    img.className = '__fav';
-    img.alt = '';
-    if (domaine) {
-      compteFav.demandes++;
-      img.src = 'https://www.google.com/s2/favicons?sz=32&domain='
-              + encodeURIComponent(domaine.textContent.trim());
-      img.addEventListener('error', () => {
-        img.style.visibility = 'hidden';
-        compteFav.echecs++;
-        if (compteFav.echecs === compteFav.demandes) addClass(document.documentElement, '__sans-fav');
-      });
-    } else {
-      img.style.visibility = 'hidden';
-    }
-    insere(titleline, img, titleline.firstChild);
+    /* Pas de favicon de domaine. La version precedente en posait un depuis
+       google.com/s2/favicons ; Hacker News sert
+       Content-Security-Policy: img-src 'self' https://account.ycombinator.com
+       et bloque les 30 requetes, dans Chrome comme dans Safari. Le domaine
+       reste lisible en toutes lettres dans .sitebit, ou HN le met deja. */
 
     /* Ponderation par score. L'exposant 0,45 ecrase le haut de la gamme et
        etale le bas : sans lui un post a 1186 points ecraserait tout le reste.

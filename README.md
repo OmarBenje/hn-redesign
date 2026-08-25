@@ -92,10 +92,10 @@ Le texte de la licence MIT de refined-hacker-news s'applique à ces portions.
 | `bin/build-chrome.sh` | régénère `chrome/` depuis le userscript et synchronise la version. |
 | `design-refs/` | captures de référence et `capture.sh`. Les fixtures ne sont pas versionnées : ce sont les écrits d'autres personnes. |
 
-## Le favicon de domaine ne marche pas sur la vraie page
+## Zéro requête réseau
 
-Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com`. Les 30 requêtes vers `google.com/s2/favicons` sont donc **bloquées par le navigateur**, dans Chrome comme dans Safari — ce n'est pas un bug de l'extension, et aucune fixture locale ne pouvait le montrer, puisqu'un fichier `file://` ne porte pas d'en-tête.
+La police est San Francisco via `-apple-system`, aucune webfont. Et il n'y a **pas de favicon de domaine** : le système en a porté un, tiré de `google.com/s2/favicons`, mais Hacker News sert `Content-Security-Policy: img-src 'self' https://account.ycombinator.com` et bloquait les 30 requêtes — dans Chrome comme dans Safari. Aucune fixture locale ne pouvait le montrer, puisqu'un fichier `file://` ne porte pas d'en-tête de réponse.
 
-Le repli est en place : chaque image qui échoue passe en `visibility:hidden`, et **quand elles échouent toutes**, la gouttière de 22 px est repliée plutôt que de réserver de la place pour du vide. Mesuré sur la vraie page : les 30 lignes tiennent toujours exactement 32 px.
+La fonctionnalité a été retirée plutôt que rafistolée : du code qui ne s'exécute jamais utilement en production est du code mort, même quand il dégrade proprement. Le domaine reste lisible en toutes lettres, là où HN le met déjà.
 
-Pour les récupérer il faudrait relâcher la CSP de HN via `declarativeNetRequest`. C'est une décision de sécurité, pas une décision de design : non prise.
+Mesuré sur `news.ycombinator.com` : **0 requête sortante, 0 message de console.**
