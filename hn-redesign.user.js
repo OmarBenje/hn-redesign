@@ -345,6 +345,20 @@ const CSS = `
 .${ROOT} #hnmain .pagetop { font-size: 13px; line-height: 16px; color: var(--meta); }
 .${ROOT} #hnmain .pagetop a { color: var(--meta); }
 
+/* ---------------------------------------------------- la coquille : onglets */
+.${ROOT} #hnmain tr.__onglets > td { padding: 0 0 16px; }
+.${ROOT} #hnmain tr.__onglets > td > div {
+  display: flex; height: 52px; box-sizing: border-box;
+  background: var(--surface-1);
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+}
+.${ROOT} #hnmain tr.__onglets a {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--meta); font-size: 15px; font-weight: 500;
+  border-bottom: 2px solid transparent;
+}
+.${ROOT} #hnmain tr.__onglets a.__on { color: var(--accent-text); border-bottom-color: var(--accent); }
+
 /* ------------------------------------------------------------ la liste T23
    Ligne fusionnee. La .subline n'est pas reecrite : ses noeuds utiles sont
    CLONES dans la .titleline et la seconde <tr> passe en display:none. Cloner
@@ -729,6 +743,16 @@ const barreDeTete = () =>
   document.querySelector('#hnmain > tbody > tr:first-child > td') ||
   document.querySelector('#hnmain > tr:first-child > td');
 
+/* Le conteneur de lignes de #hnmain — le tbody que le navigateur insere
+   d'office pendant le parsing de <table>, ou #hnmain lui-meme sous
+   linkedom, qui ne le fait pas. Meme repli que barreDeTete() ci-dessus,
+   pour la meme raison : onglets() doit inserer une ligne VOISINE de la
+   barre, pas un noeud a l'interieur d'une cellule, donc il lui faut le
+   conteneur et non le td. */
+const conteneurLignes = () =>
+  document.querySelector('#hnmain > tbody') ||
+  document.querySelector('#hnmain');
+
 /* ------------------------------------------------- la coquille : sidebar
    Le PREMIER noeud que ce script insere hors de #hnmain. Jusqu'ici la
    protection des formulaires etait structurelle : tout vivait sous #hnmain,
@@ -913,6 +937,41 @@ function entete() {
     moi.setAttribute('title', pseudo);
     insere(droite, moi, droite.firstChild);
   }
+}
+
+/* --------------------------------------------------- la coquille : onglets
+   Les trois routes existent. /best n'est pas dans la navbar native de HN —
+   c'est le seul lien de la coquille qui ne relocalise pas un lien existant,
+   et c'est assume : la route repond.
+
+   AU PLUS un actif. Si op ne correspond a aucune des trois, aucun ne l'est :
+   un defaut sur Top mentirait sur /ask ou /show. */
+const ONGLETS = [['Top', 'news'], ['New', 'newest'], ['Best', 'best']];
+
+function onglets() {
+  const corps = conteneurLignes();
+  const premiere = corps && corps.firstElementChild;
+  if (!premiere) return;
+  /* Le discriminant de /item est table.fatitem — .athing.submission existe sur
+     les deux pages. Sans ce test, un fil de commentaires gagnerait des onglets
+     de liste. */
+  if (document.querySelector('#hnmain table.fatitem')) return;
+
+  const op = document.documentElement.getAttribute('op');
+  const tr = document.createElement('tr');
+  tr.className = '__onglets';
+  const td = document.createElement('td');
+  const boite = document.createElement('div');
+  for (const [libelle, href] of ONGLETS) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = libelle;
+    if (op === href) a.className = '__on';
+    boite.appendChild(a);
+  }
+  td.appendChild(boite);
+  tr.appendChild(td);
+  insere(corps, tr, premiere.nextSibling);
 }
 
 /* ------------------------------------------------------------ la liste T23 */
@@ -1468,6 +1527,7 @@ function apply() {
   poseTheme(litTheme());
   sidebar();
   entete();
+  onglets();
   fusionner();
   habilleFil();
   return true;
@@ -1495,7 +1555,7 @@ window.hnRedesign = {
   get spine() { return spine; },
   buildModel, collapse, calculeSpine, frontiere,
   appliqueSpine, restaure, estReplie, estVisible,
-  icone, utilisateur, sidebar, entete,
+  icone, utilisateur, sidebar, entete, onglets,
 };
 
 })();

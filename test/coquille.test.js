@@ -172,3 +172,34 @@ test('sans session, la pastille cede la place au lien login natif', () => {
   assert.ok(login, 'le lien login natif reste dans l en-tete');
   assert.equal(login.textContent.trim(), 'login');
 });
+
+test('trois onglets, un seul actif sur /news', () => {
+  const { document } = charge('news.html', NEWS);
+  const tabs = [...document.querySelectorAll('.__onglets a')];
+  assert.deepEqual(tabs.map(a => a.textContent.trim()), ['Top', 'New', 'Best']);
+  assert.deepEqual(tabs.map(a => a.getAttribute('href')), ['news', 'newest', 'best']);
+  const actifs = tabs.filter(a => a.className.includes('__on'));
+  assert.equal(actifs.length, 1);
+  assert.equal(actifs[0].textContent.trim(), 'Top');
+});
+
+test('sur /newest c est New qui est actif', () => {
+  const { document } = charge('newest.html', 'https://news.ycombinator.com/newest');
+  const actifs = [...document.querySelectorAll('.__onglets a')].filter(a => a.className.includes('__on'));
+  assert.equal(actifs.length, 1);
+  assert.equal(actifs[0].textContent.trim(), 'New');
+});
+
+test('sur une route etrangere aux trois, aucun onglet n est actif', () => {
+  /* Zero actif plutot qu'un defaut sur Top : souligner Top sur /ask mentirait
+     sur ou l'on se trouve. */
+  const { document } = charge('news.html', 'https://news.ycombinator.com/ask',
+    h => h.replace('op="news"', 'op="ask"'));
+  const actifs = [...document.querySelectorAll('.__onglets a')].filter(a => a.className.includes('__on'));
+  assert.equal(actifs.length, 0);
+});
+
+test('pas d onglets sur /item', () => {
+  const { document } = charge();
+  assert.equal(document.querySelector('.__onglets'), null);
+});
