@@ -10,11 +10,26 @@
 
 Une seule tâche, et **tout le reste en dépend**.
 
-| | Tâche | Effort |
-|---|---|---|
-| **T1** | Spike [Userscripts](https://github.com/quoid/userscripts) : charger un `.user.js` de trois lignes, le modifier, redémarrer Safari | ~10 min |
+| | Tâche | Effort | État |
+|---|---|---|---|
+| **T1** | Spike [Userscripts](https://github.com/quoid/userscripts) : charger, recharger, survivre à un redémarrage de Safari | ~10 min | script prêt — **à exécuter par Omar** |
 
 Le projet suppose que Userscripts charge un fichier local, le recharge après modification, et survit à un redémarrage. **Personne ne l'a exécuté.** Si l'une des trois réponses est non, les quatre heures suivantes sont à jeter et le plan est à refaire autour d'un autre runtime.
+
+### Comment l'exécuter
+
+Le script est [`t1-spike.user.js`](t1-spike.user.js), à la racine. Sélecteur vérifié sur une vraie page HN : la règle CSS écrase bien le `bgcolor="#ff6600"` de l'attribut.
+
+1. **App Store → Userscripts** (Justin Wasack, gratuit). Puis Safari → Réglages → Extensions → cocher Userscripts.
+2. Autoriser l'extension sur `news.ycombinator.com` — « Toujours autoriser sur ce site ».
+3. Bouton Userscripts dans la barre d'outils → il demande un **dossier de travail** au premier lancement. Choisir **`~/dev/hn-redesign/`** — pas un sous-dossier : Userscripts ne lit qu'un seul dossier, sans récursion, et c'est là que vivront ensuite `hn-redesign.user.js` et `hn-redesign.css`.
+4. **Q1 — charger.** Ouvrir `news.ycombinator.com`. Le bandeau doit être vert, avec un badge `T1 v1` en haut à droite.
+5. **Q2 — recharger.** Passer `const VERSION = 1` à `2`, sauvegarder, recharger HN. Le badge doit afficher `T1 v2`. *Le numéro de version existe pour ça : sans lui, une modification qui n'est pas prise ressemble à une modification qui l'est.*
+6. **Q3 — survivre.** `Cmd+Q` sur Safari, rouvrir, retourner sur HN. Vert et badge toujours là.
+
+Trois oui → supprimer `t1-spike.user.js` et attaquer la phase 2. Un seul non → me le dire, le plan se refait autour d'un autre runtime.
+
+**Prérequis machine :** macOS 12+ et Safari 14.1+.
 
 Rien d'autre ne commence avant que T1 réponde oui trois fois.
 
