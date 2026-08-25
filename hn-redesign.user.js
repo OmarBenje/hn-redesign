@@ -699,13 +699,19 @@ function sidebar() {
   const side = document.createElement('nav');
   side.className = '__side';
 
-  /* Le logo. Deplace depuis la navbar, pas clone : il n'y en a qu'un. */
+  /* Le logo. Deplace depuis la navbar, pas clone : il n'y en a qu'un.
+     detache AVANT insere, pour tout noeud qui existait deja dans la page.
+     L'undo d'insere() est un simple remove() : juste pour un noeud neuf ou
+     clone, faux pour une relocalisation — le noeud ne reviendrait jamais a
+     son parent d'origine. detache() sauvegarde parent et position, et l'ordre
+     LIFO defait d'abord l'insertion, puis la detache. */
   const logo = barre.querySelector('img');
   if (logo) {
     const boite = document.createElement('a');
     boite.className = '__logo';
     boite.href = 'news';
     setStyle(logo, 'border', 'none');
+    detache(logo);
     insere(boite, logo, null);
     side.appendChild(boite);
   }
@@ -740,14 +746,20 @@ function sidebar() {
   groupe2.className = '__nav-2';
   for (const href of ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']) {
     const a = barre.querySelector(`.pagetop a[href="${href}"]`);
-    if (a) { insere(groupe2, a, null); }
+    /* detache AVANT insere : ces liens existent deja dans .pagetop, ce n'est
+       pas un noeud neuf. Voir le commentaire sur le logo ci-dessus. */
+    if (a) { detache(a); insere(groupe2, a, null); }
   }
   side.appendChild(groupe2);
 
   /* Explore pointe vers newest, dont le lien natif vit dans .pagetop. Il est
      deplace hors ecran plutot que supprime : le supprimer perdrait un href. */
   const natifNewest = barre.querySelector('.pagetop a[href="newest"]');
-  if (natifNewest) { addClass(natifNewest, '__range'); insere(groupe2, natifNewest, null); }
+  if (natifNewest) {
+    addClass(natifNewest, '__range');
+    detache(natifNewest);
+    insere(groupe2, natifNewest, null);
+  }
 
   /* T22 — l'interrupteur, en pied de sidebar. Il affiche l'ETAT courant et
      non l'action : « auto » dit ou on en est. */

@@ -124,3 +124,18 @@ test('revert retire la sidebar et rend body intact', () => {
   assert.equal(document.querySelector('nav.__side'), null);
   assert.equal(document.querySelector('center').getAttribute('style'), null);
 });
+
+test('revert restaure #hnmain a l octet — logo et six liens natifs y reviennent', () => {
+  /* sidebar() deplace des noeuds qui EXISTAIENT DEJA dans la page (le logo,
+     les six liens secondaires, le lien newest cache) — pas des noeuds neufs.
+     insere() seul ne les rend pas : son undo est remove(), qui les detache
+     juste de leur nouvel emplacement sans jamais les rendre a #hnmain. Un
+     detache() prealable est necessaire pour que revert() les y ramene. Le
+     test precedent ne voyait pas ce trou : il ne verifiait que l absence de
+     la sidebar, jamais le retour du contenu deplace. Comparaison a l octet
+     contre le temoin, la forme la plus forte disponible dans ce depot. */
+  const temoin = temoinBrut('news.html', connecte('omarbenje'));
+  const { api, document } = charge('news.html', NEWS, connecte('omarbenje'));
+  api.revert();
+  assert.equal(document.querySelector('#hnmain').innerHTML, temoin.querySelector('#hnmain').innerHTML);
+});
