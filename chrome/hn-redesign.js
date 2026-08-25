@@ -127,13 +127,17 @@ const CSS = `
 }
 
 /* --------------------------------------------------------------- surfaces
-   Le seul geste decoratif du systeme : la colonne est ~4 points de L* plus
-   claire que la page. Hors #hnmain mais sous .${ROOT}, que le JS ne pose que
-   si #hnmain existe — les formulaires restent intacts. */
-.${ROOT} body { background: var(--page); }
-/* 28px reserves en bas : la barre de position est en position fixed et
+   Le fond de page porte la coquille ; #hnmain n'est plus une feuille posee
+   dessus, ce sont les cartes qui le sont. Sur /item en revanche la colonne
+   redevient une surface, puisqu'il n'y a pas de cartes.
+   28px reserves en bas : la barre de position est en position fixed et
    couvrirait le dernier commentaire du fil sans cette reserve. */
-.${ROOT} #hnmain { background: var(--surface-1); padding-bottom: 28px; }
+.${ROOT} body { background: var(--page); }
+.${ROOT} #hnmain { background: transparent; padding-bottom: 28px; }
+.${ROOT} #hnmain table.fatitem,
+.${ROOT} #hnmain tr.athing.comtr {
+  background: var(--surface-1);
+}
 
 /* Padding lateral de colonne : 48px, la valeur de DESIGN.md. La navbar l'avait
    deja dans ses propres cellules ; le contenu, non — le rang commencait a 7px
@@ -551,7 +555,10 @@ const CSS = `
   height: 28px;
   line-height: 28px;
   box-sizing: border-box;
-  border-top: 1px solid var(--rail);
+  /* --line et non --rail : ce trait separe la barre de position du fil,
+     ce n'est pas un cran de la gouttiere de profondeur. --rail reste reserve
+     au motif ou le NOMBRE de traits est l'information. */
+  border-top: 1px solid var(--line);
   background: var(--surface-1);
   color: var(--meta);
   font-size: 12px;
