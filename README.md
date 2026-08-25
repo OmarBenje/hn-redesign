@@ -98,4 +98,4 @@ La police est San Francisco via `-apple-system`, aucune webfont. Et il n'y a **p
 
 La fonctionnalité a été retirée plutôt que rafistolée : du code qui ne s'exécute jamais utilement en production est du code mort, même quand il dégrade proprement. Le domaine reste lisible en toutes lettres, là où HN le met déjà.
 
-Mesuré sur `news.ycombinator.com` : **0 requête sortante, 0 message de console.**
+Mesuré sur `news.ycombinator.com` : **le script n'ajoute aucune requête réseau, et 0 message de console.** La page continue de charger ses propres assets — `news.css`, `hn.js`, `y18.svg` — mais plus rien ne part vers un tiers.

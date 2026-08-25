@@ -286,6 +286,26 @@ const CSS = `
 .${ROOT} #hnmain tr.__row { position: relative; }
 .${ROOT} #hnmain tr.__row > td { padding: 6px 0; vertical-align: middle; }
 .${ROOT} #hnmain tr.__row + tr { display: none; }
+/* Les fleches de vote. HN les sert en <div class="votearrow"> de 10x10 avec
+   triangle.svg en fond : une IMAGE, donc elles ne suivaient ni les tokens ni
+   le theme, et gardaient en sombre le gris choisi pour un fond beige. Leur
+   marge 3px 2px 6px etait par ailleurs calee sur la ligne de 30px en Verdana
+   de HN, pas sur la notre.
+
+   clip-path plutot qu'un triangle en bordures : la boite garde ses 10x10, donc
+   le rotate180 que HN applique a la fleche de downvote tourne autour du bon
+   centre. Un triangle en bordures a une boite de 0x0 et se deplacerait.
+
+   L'orange au survol n'est pas une invention : c'est la convention de HN
+   lui-meme, et un aplat de 10px a droit a l'orange pur. */
+.${ROOT} #hnmain div.votearrow {
+  background-image: none;
+  background-color: var(--meta);
+  clip-path: polygon(50% 12%, 100% 88%, 0 88%);
+  margin: 0;
+}
+.${ROOT} #hnmain .votelinks a:hover div.votearrow { background-color: var(--accent); }
+
 .${ROOT} #hnmain tr.__row .rank {
   color: var(--meta); font-size: 12px; font-variant-numeric: tabular-nums;
 }

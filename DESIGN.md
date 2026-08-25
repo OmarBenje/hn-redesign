@@ -192,6 +192,10 @@ L'exposant 0,45 écrase le haut de la gamme et étale le bas, sinon un post à 1
 >
 > **Effet de bord retrouvé : zéro requête réseau.** C'était vrai de la typographie, ce ne l'était plus de la liste. Ça l'est de nouveau — mesuré sur la vraie page, 0 requête sortante et 0 message de console.
 
+**2. Les flèches de vote.** HN les sert en `<div class="votearrow">` de 10 × 10 avec `triangle.svg` en fond — une **image**, donc elles ne suivaient ni les tokens ni le thème, et gardaient en sombre le gris choisi pour un fond beige. Leur marge `3px 2px 6px` était par ailleurs calée sur la ligne de 30 px en Verdana de HN. Elles prennent maintenant `--meta`, `--accent` au survol, et une marge nulle.
+
+**`clip-path` et non un triangle en bordures.** La boîte garde ses 10 × 10, donc le `rotate180` que HN applique à la flèche de *downvote* tourne autour du bon centre. Un triangle en bordures a une boîte de 0 × 0 et se déplacerait en tournant. *(La flèche de downvote n'a pas pu être vérifiée : elle demande un compte avec assez de karma.)*
+
 **3. Hiérarchie de la ligne de métadonnées.** Le nombre de commentaires est **la seule chose colorée** de la ligne (`--accent-text`) : c'est là qu'on clique. Le score est en `--c2` et en gras, en chiffres tabulaires. `hide`, `past`, `favorite` restent en gris méta. L'âge reste en gris méta.
 
 **Densité livrée le 2026-08-25 : 30 posts entiers, hauteur de ligne 32 px pour les 30 lignes**, viewport 1400 × 1500, dernier post à 1376 px. Mesuré au `getBoundingClientRect`. HN natif est à 30 px de ligne pour 30 posts, mais en Verdana 10 px : le redesign atteint la densité native en typographie lisible. La valeur antérieure de 58 px et 24 posts est superseded.
@@ -392,6 +396,7 @@ Chaque choix finance le suivant. Si l'un saute, vérifier ce qu'il payait.
 | 2026-08-25 | **Tracking en deux paliers** | `0` sous 17 px, `-0.012em` au-dessus. Une seule valeur négative. La métadonnée à 12 px garde `+0.1px`, tracking positif, exception documentée pour qu'elle ne se lise pas comme une dérive. |
 | 2026-08-25 | **`--radius: 2px`, valeur unique** | Le projet n'a aucune surface. Anneau de focus et cadres de formulaire, une seule valeur pour tous. Satisfait le budget du lint T25. |
 | 2026-08-25 | **`:focus-visible` spécifié** | Le système n'avait aucune spécification de focus. `outline` 2 px en accent texte, offset 2 px. `:focus-visible` et non `:focus` ; accent texte et non orange pur, qui échoue à 2,81:1 en clair. |
+| 2026-08-25 | **Flèches de vote habillées** | Elles étaient une image, donc hors du système : ni token, ni thème, et une marge calée sur la ligne de HN. `clip-path` plutôt que bordures, pour que le `rotate180` du downvote tourne juste. |
 | 2026-08-25 | **Favicon de domaine retiré** | La CSP de HN bloque les 30 requêtes ; il ne s'affichait jamais en production. Le repli « replier la gouttière » a été retiré avec lui : du code qui ne sert jamais utilement est mort, même quand il dégrade proprement. Rend au projet ses **zéro requête réseau**. |
 | 2026-08-25 | **Un trait de rail par ancêtre** | Un trait unique n'exprime que l'imbrication ; le nombre de traits exprime la profondeur. Une règle de fond remplace douze règles de largeur. |
 | 2026-08-25 | **Thème à trois états, `auto` par défaut** | `auto` suit l'heure et couvre le cas courant. Le lien affiche l'état, pas l'action. |

@@ -82,6 +82,12 @@ verdict "$(js '(()=>{
     "aucune metadonnee dupliquee dans une ligne":[(()=>[...document.querySelectorAll(".__m")].every(m=>{
       const h=[...m.querySelectorAll("a")].map(a=>a.getAttribute("href")+"|"+a.textContent.trim());return new Set(h).size===h.length}))(),
       "l age et le lien commentaires partagent le meme href — c est le TEXTE qui les separe"],
+    "les fleches de vote suivent les tokens":[(()=>{const a=document.querySelector("div.votearrow");
+      const o={}; for (const t of ["hn-light","hn-dark"]) { document.documentElement.className="hn-redesign "+t;
+        const c=getComputedStyle(a); o[t]=c.backgroundColor+"|"+c.backgroundImage+"|"+c.clipPath; }
+      document.documentElement.className="hn-redesign";
+      return o["hn-light"]!==o["hn-dark"] && !/url\(/.test(o["hn-light"]) && /polygon/.test(o["hn-light"])})(),
+      "clip-path et non image : la boite garde 10x10, donc le rotate180 du downvote tourne juste"],
     "aucun id duplique par les clones":[(()=>{const a=[...document.querySelectorAll("[id]")].map(e=>e.id);
       return new Set(a).size===a.length})(), [...document.querySelectorAll("[id]")].length+" id"]
   })})()')" || ECHECS=1
