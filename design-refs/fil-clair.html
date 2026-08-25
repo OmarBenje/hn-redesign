@@ -2,43 +2,44 @@
 :root{
   --page:#EFEDE4; --col:#FBFAF6;
   --c0:#1F1E1A; --c1:#393834; --c2:#545350; --c3:#72716F; --c4:#8D9195;
-  --meta:#6E6B64; --author:#4A4741; --rail:#E4E0D4;
+  --visited:#8D9195; --meta:#6E6B64; --author:#4A4741; --rail:#E4E0D4;
   --accent:#FF6600; --accent-text:#BF4300;
-  --serif:"Charter","New York",Charter,serif;
-  --sans:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --ui:-apple-system,BlinkMacSystemFont,sans-serif;
 }
-html.dark{
-  --page:#121110; --col:#1A1917;
-  --c0:#E8E5DE; --c1:#C7C4B9; --c2:#A5A39D; --c3:#858481; --c4:#636669;
-  --meta:#8A867C; --author:#B0ABA0; --rail:#2E2C28;
-  --accent-text:#FF6600;
-}
+html.dark{--page:#121110;--col:#1A1917;--c0:#E8E5DE;--c1:#C7C4B9;--c2:#A5A39D;--c3:#858481;--c4:#636669;
+  --visited:#636669;--meta:#8A867C;--author:#B0ABA0;--rail:#2E2C28;--accent-text:#FF6600}
 body{background:var(--page)!important;margin:0}
 #hnmain{width:880px!important;max-width:880px;margin:0 auto;background:var(--col)!important;
-  font-family:var(--sans)!important;font-size:12px!important;line-height:16px!important}
+  font-family:var(--ui)!important;font-size:12px!important;line-height:16px!important}
 #hnmain>tbody>tr>td{padding-left:48px!important;padding-right:48px!important}
 #hnmain>tbody>tr:first-child>td{padding:0!important}
 #hnmain a{color:var(--c0)!important;text-decoration:none}
-#hnmain .titleline a{font-family:var(--serif)!important;font-size:22px!important;line-height:29px!important;font-weight:600}
-#hnmain .title .sitebit,#hnmain .sitestr{font-family:var(--sans)!important;font-size:12px!important;color:var(--meta)!important;font-weight:400}
-#hnmain .subtext,#hnmain .subtext a,#hnmain .comhead,#hnmain .comhead a{
-  font-family:var(--sans)!important;font-size:12px!important;line-height:16px!important;
+#hnmain .rank{font-size:12px;color:var(--c3)!important;font-variant-numeric:tabular-nums}
+#hnmain .subtext,#hnmain .subtext a,#hnmain .comhead,#hnmain .comhead a,#hnmain .sitebit,#hnmain .sitestr{
+  font-family:var(--ui)!important;font-size:12px!important;line-height:16px!important;
   color:var(--meta)!important;letter-spacing:.1px}
-#hnmain .comhead .hnuser{color:var(--author)!important}
-#hnmain .commtext,#hnmain .toptext{font-family:var(--serif)!important;font-size:15.5px!important;line-height:24px!important;display:block;max-width:660px}
+#hnmain .comhead .hnuser,#hnmain .subtext .hnuser{color:var(--author)!important}
+#hnmain .subtext .score{color:var(--c2)!important;font-weight:600;font-variant-numeric:tabular-nums}
+#hnmain .subtext a[href^="item?id="]:last-of-type{color:var(--accent-text)!important}
+#hnmain textarea,#hnmain input{background:var(--col)!important;color:var(--c0)!important;
+  border:1px solid var(--rail)!important;font-family:var(--ui)!important;font-size:12px!important;
+  padding:6px!important;-webkit-appearance:none}
+html.dark #hnmain .votearrow{filter:invert(1) opacity(.45)}
+.__fav{width:14px;height:14px;vertical-align:-2px;margin-right:7px;border-radius:2px;opacity:.9}
+.__fav.__none{visibility:hidden}
+
+#hnmain .titleline a{font-family:var(--ui)!important;font-size:21px!important;line-height:28px!important;
+  font-weight:600;letter-spacing:-.015em}
+#hnmain .commtext,#hnmain .toptext{font-family:var(--ui)!important;font-size:15px!important;
+  line-height:23px!important;display:block;max-width:660px}
 #hnmain .commtext p{margin:12px 0 0 0}
-#hnmain .commtext pre,#hnmain .commtext code{font-family:var(--mono)!important;font-size:13px!important;line-height:20px!important}
-/* rampe : 4 crans chauds + 1 froid */
-#hnmain .commtext.c00,#hnmain .commtext.C00{color:var(--c0)!important}
+#hnmain .commtext.c00{color:var(--c0)!important}
 #hnmain .commtext.c5a,#hnmain .commtext.c5A{color:var(--c1)!important}
-#hnmain .commtext.c73,#hnmain .commtext.C73{color:var(--c2)!important}
-#hnmain .commtext.c88,#hnmain .commtext.C88{color:var(--c3)!important}
+#hnmain .commtext.c73{color:var(--c2)!important}
+#hnmain .commtext.c88{color:var(--c3)!important}
 #hnmain .commtext.cdd,#hnmain .commtext.cDD{color:var(--c4)!important}
-/* espacement : 16px entre freres, 4px meta->corps */
 #hnmain tr.comtr>td.default{padding:16px 0 0 0!important}
 #hnmain .comhead{display:block;margin-bottom:4px}
-/* indentation 22px/niveau au lieu de 40 */
 #hnmain td.ind[indent="0"] img{width:0px!important}
 #hnmain td.ind[indent="1"] img{width:22px!important}
 #hnmain td.ind[indent="2"] img{width:44px!important}
@@ -55,18 +56,11 @@ body{background:var(--page)!important;margin:0}
 #hnmain td.ind{position:relative}
 #hnmain td.ind::after{content:"";position:absolute;top:0;bottom:0;right:11px;width:1px;background:var(--rail)}
 #hnmain td.ind[indent="0"]::after{display:none}
-/* formulaires */
-#hnmain textarea,#hnmain input[type=text],#hnmain input[type=password],#hnmain input[type=submit]{
-  background:var(--col)!important;color:var(--c0)!important;border:1px solid var(--rail)!important;
-  font-family:var(--sans)!important;font-size:12px!important;padding:6px!important;-webkit-appearance:none}
-html.dark #hnmain .votearrow{filter:invert(1) opacity(.45)}
-/* elements neufs */
-#__spine{font-family:var(--sans);font-size:12px;color:var(--accent-text)!important;
-  border-bottom:1px solid currentColor;padding-bottom:1px}
-#__spinebar{padding:24px 48px 0;font-family:var(--sans);font-size:12px;color:var(--meta)}
+#__spinebar{padding:24px 48px 0;font-family:var(--ui);font-size:12px;color:var(--meta)}
+#__spine{color:var(--accent-text)!important;border-bottom:1px solid currentColor;padding-bottom:1px}
 #__pos{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:880px;box-sizing:border-box;
   background:var(--col);border-top:1px solid var(--rail);height:28px;line-height:28px;
-  font-family:var(--sans);font-size:12px;color:var(--meta);padding:0 48px;letter-spacing:.1px}
+  font-family:var(--ui);font-size:12px;color:var(--meta);padding:0 48px;letter-spacing:.1px}
 </style></head><body><center><table id="hnmain" border="0" cellpadding="0" cellspacing="0" width="85%" bgcolor="#f6f6ef"><tr><td bgcolor="#ff6600"><table border="0" cellpadding="0" cellspacing="0" width="100%" style="padding:2px"><tr><td style="width:18px;padding-right:4px"><a href="https://news.ycombinator.com"><img src="y18.svg" width="18" height="18" style="border:1px white solid; display:block"></a></td><td style="line-height:12pt; height:10px;"><span class="pagetop"><b class="hnname"><a href="news">Hacker News</a></b><a href="newest">new</a> | <a href="front">past</a> | <a href="newcomments">comments</a> | <a href="ask">ask</a> | <a href="show">show</a> | <a href="jobs">jobs</a> | <a href="submit" rel="nofollow">submit</a></span></td><td style="text-align:right;padding-right:4px;"><span class="pagetop"><a href="login?goto=item%3Fid%3D49419237">login</a></span></td></tr></table></td></tr><tr style='height:10px'/><tr id="bigbox"><td><table class="fatitem" border="0"><tr class="athing submission" id="49419237"><td align="right" valign="top" class="title"><span class="rank"></span></td><td valign="top" class="votelinks"><center><a id='up_49419237' href='vote?id=49419237&amp;how=up&amp;goto=item%3Fid%3D49419237'><div class='votearrow' title='upvote'></div></a></center></td><td class="title"><span class="titleline"><a href="https://lectronz.com/u/lectronz/articles/how-europe-is-killing-makers-and-micro-entrepreneurs">How Europe is killing makers and micro-entrepreneurs</a><span class="sitebit comhead"> (<a href="from?site=lectronz.com"><span class="sitestr">lectronz.com</span></a>)</span></span></td></tr><tr><td colspan="2"></td><td class="subtext"><span class="subline"><span class="score" id="score_49419237">333 points</span> by <a href="user?id=l-one-lone" class="hnuser">l-one-lone</a> <span class="age" title="2026-08-24T13:05:25 1787576725"><a href="item?id=49419237">1 hour ago</a></span> <span id="unv_49419237"></span> | <a href="hide?id=49419237&amp;goto=item%3Fid%3D49419237">hide</a> | <a href="https://hn.algolia.com/?query=How%20Europe%20is%20killing%20makers%20and%20micro-entrepreneurs&type=story&dateRange=all&sort=byDate&storyText=false&prefix&page=0" class="hnpast">past</a> | <a href="fave?id=49419237&amp;auth=2959e7bdffe924dc3e70a6432c9843d8dd8be1c9">favorite</a> | <a href="item?id=49419237">205&nbsp;comments</a></span></td></tr><tr><td colspan="2"></td><td><div class="toptext"></div></td></tr><tr style='height:6px'/><tr><td colspan="2"></td><td><form action="comment" method="post"><input type="hidden" name="parent" value="49419237"><input type="hidden" name="goto" value="item?id=49419237"><input type="hidden" name="hmac" value="fd2f58aaf846e8a0057ba5a6ea789df71bfcf61b"><textarea name="text" rows="8" cols="80" wrap="virtual" style="vertical-align:bottom"></textarea>&nbsp;<a href="formatdoc" tabindex="-1"><font size="-2" color="#AFAFAF">help</font></a><br><br>
 <input type="submit" value="add comment"></form></td></tr></table><br>
 <table border="0" class="comment-tree"><div id="__spinebar"><a href="#" id="__spine">Thread Spine</a> &nbsp;&middot;&nbsp; 206 commentaires, profondeur max 4</div><tr class="athing comtr" id="49420456"><td><table border="0"><tr><td class="ind" indent="0"><img src="s.gif" height="1" width="0"></td><td valign="top" class="votelinks"><center><a id='up_49420456' href='vote?id=49420456&amp;how=up&amp;goto=item%3Fid%3D49419237'><div class='votearrow' title='upvote'></div></a></center></td><td class="default"><div style="margin-top:2px; margin-bottom:-10px;"><span class="comhead"><a href="user?id=mstaoru" class="hnuser">mstaoru</a> <span class="age" title="2026-08-24T14:39:10 1787582350"><a href="item?id=49420456">6 minutes ago</a></span> <span id="unv_49420456"></span><span class="navs"> | <a href="#49419725" class="clicky" aria-hidden="true">next</a> <a class="togg clicky" id="49420456" n="2" href="javascript:void(0)">[–]</a><span class="onstory"></span></span></span></div><br>

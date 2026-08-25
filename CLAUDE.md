@@ -13,7 +13,7 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 
 ## Les trois choses qui cassent ce projet si on les oublie
 
-1. **La rampe de downvote.** HN encode le jugement de la communauté dans la pâleur du texte (`.commtext.c00` → `.cDD`). Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. Cinq règles, une par classe, dans chaque thème. Voir `DESIGN.md` § Color.
+1. **Les deux signaux de couleur de HN.** (a) La rampe de downvote sur les commentaires : `.commtext.c00` → `.cDD`. Une règle unique `.commtext { color: X }` la détruit et remonte visuellement les pires commentaires du fil. (b) `a:visited { color:#828282 }` sur la liste : HN grise les titres déjà lus, et `#hnmain a { color: ... }` l'écrase. Les deux se cassent de la même façon — une règle de couleur trop large. Voir `DESIGN.md` § Color.
 
 2. **`a.togg` est une bascule, pas un setter.** HN livre un lien de repli natif sur chaque commentaire, avec `n="<nombre de descendants>"`. Tout repli programmatique doit lire `tr.classList` avant de cliquer, sinon il **dé**-replie les commentaires que HN avait repliés (`noshow`, `coll`). Et ne replier que la **frontière** — les frères des nœuds gardés — jamais tous les non-gardés : replier un parent cache déjà sa descendance, et cliquer les descendants corrompt leur état sans rien changer à l'écran.
 
@@ -22,7 +22,7 @@ En QA, signaler tout code qui ne correspond pas à `DESIGN.md`.
 ## Contraintes de la machine
 
 - **Pas de Xcode** et ~19 Go libres. Xcode en demande ~40. Aucun plan impliquant un projet Xcode, `safari-web-extension-converter`, ou une extension Safari native n'est réalisable. Userscripts contourne tout ça.
-- **Aucune webfont.** Charter est installée localement (`Charter.ttc`). Zéro requête réseau au chargement d'une page HN.
+- **Aucune webfont.** La police est San Francisco via `-apple-system`. Zéro requête réseau. Attention : nommer `"SF Pro Text"` ne résout pas, et `system-ui` n'est pas `-apple-system`.
 
 ## Structure
 
