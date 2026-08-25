@@ -67,11 +67,20 @@ verdict "$(js '(()=>{
 
 echo
 echo "/news — la densite"
+# Cible : 6 cartes entieres, pas 7. Ruling du controleur (fix round 1/5) :
+# le chiffre de 7 dans le brief de cette tache venait d un calcul fait en
+# ecrivant le plan, sans compter les 178px de chrome au-dessus de la
+# premiere carte (en-tete 92px + barre d onglets 68px + interstice 18px).
+# En-tete, onglets et carte sont chacun conformes a leur propre spec, deja
+# revue et livree dans une tache anterieure — c est la SOMME qui n avait
+# jamais ete verifiee. floor((900 - 178) / 110) = 6, avec 110px = 102px de
+# carte + 8px d interstice entre cartes. Design inchange ; seule la cible
+# etait fausse.
 verdict "$(js '(()=>{
   const r=[...document.querySelectorAll("#hnmain tr.__card")];
   const entiers=r.filter(x=>{const b=x.getBoundingClientRect();return b.top>=0&&b.bottom<=900}).length;
   return JSON.stringify({
-    "7 cartes entieres dans 900px": [entiers>=7, entiers+" cartes entieres"]
+    "6 cartes entieres dans 900px": [entiers===6, entiers+" cartes entieres"]
   });})()')" || ECHECS=1
 
 echo
@@ -254,14 +263,13 @@ verdict "$(js '(()=>{
     "indentation a 22px par palier":[pas.every(([d,v])=>v===d*22),
       pas.slice(0,5).map(p=>p[0]+":"+p[1]).join(" ")],
     /* Cible DESIGN.md § Le fil, ligne "Mesure de texte : 660px a la
-       profondeur 0", verifiee de nouveau ici en neutralisant a la main le
-       margin-left de .${ROOT} center : la valeur EXACTE revient a 660px.
-       Le defaut est donc reel — cette regle CSS est inconditionnelle et
-       ampute #hnmain de 220px meme sur /item, ou sidebar() ne pose pourtant
-       aucune sidebar pour justifier ce decalage. Signale, non corrige : hors
-       du perimetre autorise de cette tache (voir le rapport). */
-    "mesure de 660px a la profondeur 0":[mesure===660,
-      mesure+"px — BUG CONNU si != 660 : center{margin-left:220px} s applique meme sans sidebar sur /item"],
+       profondeur 0". Tenait avant la coquille, casse par elle : le
+       margin-left de .${ROOT} center s appliquait sans condition, meme
+       sur /item ou aucune sidebar n existe pour justifier les 220px
+       perdus. Corrige (fix round 1/5) par une classe hn-side, posee par
+       sidebar() uniquement quand elle rend reellement quelque chose ; la
+       regle CSS en depend desormais. */
+    "mesure de 660px a la profondeur 0":[mesure===660, mesure+"px"],
     "le corps est a 15px/22px":[cs(".commtext").fontSize==="15px"&&cs(".commtext").lineHeight==="22px",
       cs(".commtext").fontSize+"/"+cs(".commtext").lineHeight],
     "le formulaire de reponse est replie":[!!form&&cs("#hnmain form[action=\"comment\"]").display==="none"&&!!document.querySelector("a.__repondre"),
