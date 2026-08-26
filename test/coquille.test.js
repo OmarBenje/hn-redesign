@@ -400,3 +400,38 @@ test('connecte : revert restaure #hnmain a l octet', () => {
   assert.equal(document.querySelector('#hnmain').innerHTML,
     temoinBrut('news.html', connecte('omarbnjl')).querySelector('#hnmain').innerHTML);
 });
+
+/* Le karma enveloppe dans un ELEMENT, pas un noeud texte. C'est la forme que
+   la vraie page sert, et elle a produit un « 1 » orphelin a cote de la
+   pastille : le premier nettoyage ne ramassait que les noeuds texte enfants
+   DIRECTS du span.pagetop, donc le nombre, niche dans un element, survivait.
+   La trace est lisible dans la premiere capture — « omarbnjl (1logout » : le
+   « ) | » avait bien saute, le « 1 » non, parce qu'il n'etait pas au meme
+   niveau. D'ou le balayage recursif : le critere est « du texte hors d'un
+   lien », pas « un enfant direct ». */
+const connecteKarmaEnveloppe = (pseudo = 'omarbnjl', karma = 1) => html => html
+  .replace(/<a href="login\?goto=news">login<\/a>/,
+    `<a id="me" href="user?id=${pseudo}">${pseudo}</a> (<span class="karma">${karma}</span>) | ` +
+    `<a id="logout" href="logout?auth=0f2e&amp;goto=news">logout</a>`);
+
+test('karma enveloppe : aucun nombre orphelin ne reste a cote de la pastille', () => {
+  const { document } = charge('news.html', NEWS, connecteKarmaEnveloppe('omarbnjl', 1));
+  const cellules = [...document.querySelectorAll('.__entete td')];
+  const droite = cellules[cellules.length - 1];
+  assert.equal(droite.textContent.replace(/\s/g, ''), 'O',
+    'la cellule droite ne porte que l initiale — pas de « 1 » residuel');
+});
+
+test('karma enveloppe : le nombre est quand meme relu et affiche en sidebar', () => {
+  const { document } = charge('news.html', NEWS, connecteKarmaEnveloppe('omarbnjl', 42));
+  const k = document.querySelector('.__side .__compte .__karma');
+  assert.ok(k, 'le bloc de compte porte le karma');
+  assert.equal(k.textContent, '42 karma');
+});
+
+test('karma enveloppe : revert restaure #hnmain a l octet', () => {
+  const { api, document } = charge('news.html', NEWS, connecteKarmaEnveloppe('omarbnjl', 1));
+  api.revert();
+  assert.equal(document.querySelector('#hnmain').innerHTML,
+    temoinBrut('news.html', connecteKarmaEnveloppe('omarbnjl', 1)).querySelector('#hnmain').innerHTML);
+});

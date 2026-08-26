@@ -965,9 +965,24 @@ function sidebar() {
 
     /* Les noeuds texte restants portent « (karma) » et le separateur « | ».
        On les retire du DOM — reversible — et on rend le nombre dans un noeud
-       NEUF, pour ne pas avoir a reecrire le texte d'un noeud de HN. */
-    const restes = [...compte.childNodes].filter(n => n.nodeType === 3);
-    const karma = (restes.map(n => n.textContent).join(' ').match(/\((\d+)\)/) || [])[1];
+       NEUF, pour ne pas avoir a reecrire le texte d'un noeud de HN.
+
+       ON BALAIE LA CELLULE ENTIERE, pas les seuls enfants directs du
+       span.pagetop. La premiere version ne prenait que ceux-la, et un « 1 »
+       restait affiche a cote de la pastille sur la vraie page : le karma n'y
+       vit pas toujours au meme niveau que le lien. Le critere n'est donc pas
+       « ou se trouve le noeud » mais « est-ce du texte hors d'un lien » — un
+       libelle de lien se deplace avec son lien, le reste n'a rien a faire la.
+       Meme logique que pour les href : on decrit ce qu'on garde, pas ou. */
+    const cellule = compte.closest('td') || compte;
+    const restes = [];
+    (function ramasse(n) {
+      for (const enfant of [...n.childNodes]) {
+        if (enfant.nodeType === 3) { if (enfant.textContent.trim()) restes.push(enfant); }
+        else if (enfant.nodeType === 1 && enfant.tagName !== 'A') ramasse(enfant);
+      }
+    })(cellule);
+    const karma = (restes.map(n => n.textContent).join(' ').match(/\((\d+)\)|\b(\d+)\b/) || []).slice(1).find(Boolean);
     restes.forEach(detache);
     if (karma) {
       const k = document.createElement('span');
