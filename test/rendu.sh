@@ -155,9 +155,12 @@ echo "/news — la gouttiere de 48px de l en-tete (finding 2)"
 # est le tableau de cartes (donc la barre d onglets, alignee dessus par le
 # fix du finding 3) : le titre doit commencer ou la colonne commence, et le
 # dernier element de droite doit finir ou la colonne finit. Tolerance de
-# 6px : le tableau de navbar de HN porte lui-meme padding:2px et ses
-# cellules padding-right:4px, en INLINE — invisible a l arithmetique, connu
-# seulement en le rendant.
+# 1px, et pas plus. Elle etait a 6px tant que les styles INLINE de HN — le
+# padding:2px de sa table de navbar, le padding-right:4px de ses cellules et
+# le width:18px de l ancienne cellule du logo — repoussaient l en-tete hors de
+# la colonne. Ils sont neutralises par setStyle, donc reversibles, et l ecart
+# tombe a 1px : la boite inline du titre, tracee jusque-la, soit un demi-point
+# CSS. Au-dela, c est une regression, pas du bruit.
 verdict "$(js '(()=>{
   const titre=document.querySelector(".__titre");
   const liste=document.querySelector("#hnmain table.__liste");
@@ -168,9 +171,9 @@ verdict "$(js '(()=>{
   const tb=titre.getBoundingClientRect(), lb=liste.getBoundingClientRect(), db=droite.getBoundingClientRect();
   const ecartGauche=Math.abs(tb.left-lb.left), ecartDroite=Math.abs(db.right-lb.right);
   return JSON.stringify({
-    "titre aligne sur le bord gauche de la colonne": [ecartGauche<=6,
+    "titre aligne sur le bord gauche de la colonne": [ecartGauche<=1,
       "titre a "+Math.round(tb.left)+"px, colonne a "+Math.round(lb.left)+"px, ecart "+ecartGauche.toFixed(1)+"px"],
-    "la cellule de droite alignee sur le bord droit de la colonne": [ecartDroite<=6,
+    "la cellule de droite alignee sur le bord droit de la colonne": [ecartDroite<=1,
       "droite a "+Math.round(db.right)+"px, colonne a "+Math.round(lb.right)+"px, ecart "+ecartDroite.toFixed(1)+"px"]
   });})()')" || ECHECS=1
 
@@ -179,11 +182,19 @@ echo "/news — la carte a la largeur de la barre d onglets (finding 3)"
 verdict "$(js '(()=>{
   const liste=document.querySelector("#hnmain table.__liste");
   const tabsDiv=document.querySelector(".__onglets > td > div");
-  if (!liste||!tabsDiv) return JSON.stringify({"comparaison possible":[false,"element(s) absent(s)"]});
+  /* La CARTE, pas seulement sa table. Une tr en display:grid n est plus une
+     ligne de table : son bloc conteneur devient une cellule anonyme ajustee
+     au contenu, et la carte s arretait 37px avant le bord alors que la table
+     autour d elle etait bien pleine largeur. Mesurer la table seule laissait
+     passer exactement ce defaut-la. */
+  const carte=document.querySelector("#hnmain tr.__card");
+  if (!liste||!tabsDiv||!carte) return JSON.stringify({"comparaison possible":[false,"element(s) absent(s)"]});
   const lb=liste.getBoundingClientRect(), tb=tabsDiv.getBoundingClientRect();
   return JSON.stringify({
     "bord gauche identique": [Math.abs(lb.left-tb.left)<=1, Math.round(lb.left)+"px contre "+Math.round(tb.left)+"px"],
-    "bord droit identique": [Math.abs(lb.right-tb.right)<=1, Math.round(lb.right)+"px contre "+Math.round(tb.right)+"px"]
+    "bord droit identique": [Math.abs(lb.right-tb.right)<=1, Math.round(lb.right)+"px contre "+Math.round(tb.right)+"px"],
+    "la carte elle-meme remplit la colonne": [Math.abs(carte.getBoundingClientRect().right-tb.right)<=1,
+      Math.round(carte.getBoundingClientRect().right)+"px contre "+Math.round(tb.right)+"px"]
   });})()')" || ECHECS=1
 
 echo

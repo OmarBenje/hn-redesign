@@ -424,7 +424,16 @@ const CSS = `
    invisible avant que les lignes aient une bordure ou un fond, expose des
    que la barre d'onglets au-dessus, elle, occupe toute la colonne. Sans ce
    width:100%, les bords droits divergent de plus de 150px. */
-.${ROOT} #hnmain table.__liste { width: 100%; }
+/* display: block sort la table de liste du modele table, et ce n'est pas un
+   detail de mise en forme : une tr en display:grid n'est plus une ligne de
+   table, donc son bloc conteneur devient une cellule anonyme AJUSTEE AU
+   CONTENU. Mesure : la table faisait bien 363..1257, la carte s'arretait a
+   1220 — 37px courts, visibles a l'oeil contre la barre d'onglets juste
+   au-dessus. Ni width:100% ni min-width ne la rattrapent, parce que le
+   probleme est le bloc conteneur, pas la largeur demandee. En block, tbody et
+   tr redeviennent des boites normales et la carte remplit la colonne. */
+.${ROOT} #hnmain table.__liste,
+.${ROOT} #hnmain table.__liste > tbody { display: block; width: 100%; }
 
 /* ------------------------------------------------------ la coquille : la carte
    La tr EST la carte. Grille de deux colonnes : la gouttiere porte la pastille
@@ -1041,14 +1050,34 @@ function entete() {
   const [gauche, centre, droite] = cellules;
   if (!gauche || !centre || !droite) return;
 
+  /* Les styles INLINE de HN dans la navbar, neutralises par setStyle — donc
+     enregistres dans la pile d'annulation, donc reversibles. Une declaration
+     inline bat la feuille : sans ca, la goutiere de 48px posee sur le td
+     exterieur est repoussee de quelques pixels et RIEN dans l'en-tete ne
+     s'aligne sur la colonne. Mesure avant : titre a 366 contre une colonne a
+     363. Trois coupables, tous dans le HTML de HN :
+       - la table de navbar porte style="padding:2px" ;
+       - la premiere et la derniere cellule portent padding-right:4px ;
+       - la premiere cellule garde width:18px, la largeur de l'ancien logo,
+         qui n'a plus rien a contraindre depuis qu'il est parti en sidebar. */
+  const tableNav = barre.querySelector('table');
+  if (tableNav) setStyle(tableNav, 'padding', '0');
+  setStyle(gauche, 'width', 'auto');
+  setStyle(gauche, 'paddingRight', '0');
+  setStyle(droite, 'paddingRight', '0');
+
   /* 1. Le titre. b.hnname vit dans .pagetop de la cellule du milieu ; on le
      deplace dans la cellule de gauche, ou il devient le titre de page.
      detache AVANT insere, pour tout noeud qui existait deja dans la page.
      L'undo d'insere() est un simple remove() : juste pour un noeud neuf ou
      clone, faux pour une relocalisation — le noeud ne reviendrait jamais a
      son parent d'origine. */
+  /* En TETE de cellule, pas a la fin. L'ancre qui enveloppait le logo reste
+     la, vide, une fois l'image partie en sidebar — et le titre insere apres
+     elle demarrait un pixel plus loin que la colonne. On ne retire pas cette
+     ancre : c'est un lien natif vers l'accueil, il doit rester atteignable. */
   const nom = barre.querySelector('.hnname');
-  if (nom) { addClass(nom, '__titre'); detache(nom); insere(gauche, nom, null); }
+  if (nom) { addClass(nom, '__titre'); detache(nom); insere(gauche, nom, gauche.firstChild); }
 
   /* 2. La recherche. */
   const forme = document.querySelector('form[action*="hn.algolia.com"]');
