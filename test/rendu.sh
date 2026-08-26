@@ -20,6 +20,25 @@ FIX=design-refs/fixtures
 TMP=/private/tmp/hn-rendu
 mkdir -p "$TMP"
 cp "$FIX"/*.html "$TMP"/
+
+# La fixture CONNECTEE, fabriquee ici plutot que versionnee — les fixtures sont
+# les ecrits d'autres personnes et ne vivent pas dans le depot. Une session
+# ouverte change la navbar sur trois points : la cellule centrale gagne welcome
+# et threads, celle de droite porte le karma, et logout remplace login. Les
+# trois comptent : c'est exactement ce qui manquait quand « welcomethreads » a
+# ete livre a l'ecran sans qu'aucun des 76 controles ne le voie.
+python3 - "$TMP/news.html" "$TMP/news-connecte.html" <<'FIXPY'
+import sys, io
+src, dst = sys.argv[1], sys.argv[2]
+h = io.open(src, encoding='utf-8').read()
+h = h.replace('<a href="login?goto=news">login</a>',
+  '<a id="me" href="user?id=omarbnjl">omarbnjl</a> (137) | '
+  '<a id="logout" href="logout?auth=0f2e&amp;goto=news">logout</a>')
+h = h.replace('<a href="newest">new</a>',
+  '<a href="newest">new</a> | <a href="welcome">welcome</a> | '
+  '<a href="threads?id=omarbnjl">threads</a>')
+io.open(dst, 'w', encoding='utf-8').write(h)
+FIXPY
 cp hn-redesign.user.js "$TMP/us.js"
 
 ECHECS=0
@@ -251,14 +270,14 @@ verdict "$(js '(()=>{
   })})()')" || ECHECS=1
 
 echo
-echo "/item — les six liens natifs, sans sidebar pour les accueillir (T8 partie A)"
+echo "/item — tous les liens natifs, sans sidebar pour les accueillir (T8 partie A)"
 verdict "$(js '(()=>{
   const nav=document.querySelector(".__entete .__item-nav");
   const liens=nav?[...nav.querySelectorAll("a")].map(a=>a.getAttribute("href")):[];
   const rech=document.querySelector(".__entete .__rech");
   const pagetops=[...document.querySelectorAll(".pagetop")];
   return JSON.stringify({
-    "les six liens sont sous le titre":[JSON.stringify(liens)===JSON.stringify(["front","newcomments","ask","show","jobs","submit"]),
+    "tous les liens sont sous le titre":[JSON.stringify(liens)===JSON.stringify(["newest","front","newcomments","ask","show","jobs","submit"]),
       liens.join(" ")],
     "aucun deplace en double":[liens.every(h=>document.querySelectorAll("a[href=\"" + h + "\"]").length===1),"chaque href une seule fois"],
     "la recherche garde la cellule centrale":[!!(rech&&rech.closest(".__entete")),"oui"],
@@ -492,6 +511,37 @@ verdict "$(js '(()=>{const ap=[...document.querySelectorAll("input")].map(e=>{co
     "feuille non injectee":[!document.getElementById("hn-redesign-style"),"aucune"],
     "les 7 input nont pas bouge dun pixel":[bouges.length===0&&ap.length===7, ap.length+" input, "+bouges.length+" deplace(s)"]
   })})()')" || ECHECS=1
+
+# ---------------------------------------------------- /news, session OUVERTE
+page news-connecte.html
+$BROWSE eval "$TMP/us.js" >/dev/null 2>&1
+echo "/news connecte — l en-tete ne deborde pas, le compte descend en sidebar"
+verdict "$(js '(()=>{
+  const ent=document.querySelector(".__entete");
+  const col=document.querySelector("table.__liste").getBoundingClientRect();
+  const cells=[...document.querySelectorAll(".__entete td")];
+  const droite=cells[cells.length-1].getBoundingClientRect();
+  const restes=[...document.querySelectorAll(".__entete .pagetop a")]
+    .filter(a=>!a.closest(".hnname")).map(a=>a.getAttribute("href"));
+  const bloc=document.querySelector(".__side .__compte");
+  const karma=bloc?bloc.querySelector(".__karma"):null;
+  const pastille=document.querySelector(".__entete .__moi");
+  const deborde=[...document.querySelectorAll(".__entete *")]
+    .filter(e=>e.getBoundingClientRect().right>col.right+1).length;
+  const rech=document.querySelector(".__rech input");
+  const cr=rech?getComputedStyle(rech):null;
+  return JSON.stringify({
+    "aucun lien natif residuel dans l en-tete":[restes.length===0, restes.join(" ")||"aucun"],
+    "rien ne deborde de la colonne":[deborde===0, deborde+" element(s) au-dela de "+Math.round(col.right)],
+    "la cellule droite ne porte que la pastille":[!!pastille&&Math.round(droite.right)<=Math.round(col.right)+1,
+      "droite finit a "+Math.round(droite.right)+", colonne a "+Math.round(col.right)],
+    "le bloc de compte est en sidebar":[!!bloc&&!!karma&&karma.textContent==="137 karma",
+      karma?karma.textContent:"absent"],
+    "logout est atteignable depuis la sidebar":[!!(bloc&&bloc.querySelector("a[href^=logout]")),"ok"],
+    "le champ de recherche na pas de bordure native":[!!cr&&cr.borderTopWidth==="0px"&&cr.appearance==="none",
+      cr?cr.borderTopWidth+" / appearance "+cr.appearance:"-"]
+  });})()')"
+[ $? -ne 0 ] && ECHECS=1
 
 echo
 [ $ECHECS -eq 0 ] && echo "Tout tient." || echo "DES ECHECS."

@@ -318,10 +318,23 @@ const CSS = `
    document — sinon un href disparaitrait — mais hors de la vue. */
 .${ROOT} .__side .__nav-2 a.__range { position: absolute; opacity: 0; pointer-events: none; }
 
+/* Le bloc de compte pousse le pied vers le bas : c'est lui qui porte le
+   margin-top:auto quand la session est ouverte, et l'interrupteur le suit.
+   Session fermee, le bloc n'existe pas et l'interrupteur reprend le role. */
+.${ROOT} .__side .__compte {
+  margin-top: auto; padding: 14px 12px 4px;
+  border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.${ROOT} .__side .__compte #me { color: var(--author); font-size: 13px; font-weight: 500; }
+.${ROOT} .__side .__compte .__karma { color: var(--meta); font-size: 12px; }
+.${ROOT} .__side .__compte a[href^="logout"] { color: var(--meta); font-size: 12px; }
+
 .${ROOT} .__side a.__theme {
   margin-top: auto; padding: 8px 12px;
   color: var(--meta); font-size: 12px;
 }
+.${ROOT} .__side .__compte ~ a.__theme { margin-top: 0; }
 
 /* --------------------------------------------------- la coquille : l'en-tete
    Le chemin complet, jamais td:first-child depuis #hnmain : ce selecteur-la
@@ -366,7 +379,20 @@ const CSS = `
   color: var(--meta);
 }
 .${ROOT} #hnmain .__rech svg { width: 16px; height: 16px; flex: none; }
-.${ROOT} #hnmain .__rech input {
+/* appearance: none n'est pas cosmetique. Safari dessine sa propre bordure
+   arrondie sur un input[type=text] PAR-DESSUS la notre : a l'ecran, deux
+   pilules concentriques. Chromium ne le fait pas, donc test/rendu.sh ne
+   pouvait pas le voir — meme genre d'angle mort que la CSP. */
+/* input[type="text"] et non input tout court, et ce n'est pas de la
+   coquetterie : la regle generique de T19, #hnmain input[type=text], a
+   EXACTEMENT la meme specificite (1,2,1) que .__rech input et vit plus bas
+   dans la feuille. A egalite, l'ordre tranche — elle gagnait, et le champ de
+   recherche portait sa bordure de 1px par-dessus la pilule. Preciser le type
+   ici porte la notre a (1,3,1) et la fait gagner par specificite, pas par
+   position : un reagencement du fichier ne peut plus la recasser en silence.
+   test/regles.mjs prouve ce classement, comme il le fait pour a:visited. */
+.${ROOT} #hnmain .__rech input[type="text"] {
+  appearance: none; -webkit-appearance: none;
   flex: 1; min-width: 0; border: 0; background: none; outline: 0;
   font-family: var(--ui); font-size: 14px; color: var(--text);
 }
@@ -868,6 +894,11 @@ function sidebar() {
   }
 
   const pseudo = utilisateur();
+  /* La cellule de droite de la navbar : HN y met le pseudo et logout quand la
+     session est ouverte, le lien login sinon. C'est la DERNIERE .pagetop. */
+  const pagetops = [...barre.querySelectorAll('.pagetop')];
+  const compte = pagetops[pagetops.length - 1];
+
   const groupe1 = document.createElement('div');
   groupe1.className = '__nav-1';
 
@@ -889,27 +920,66 @@ function sidebar() {
   }
   side.appendChild(groupe1);
 
-  /* Les six liens natifs que la maquette ne montre pas. DEPLACES, jamais
-     clones : la premisse 3 du systeme dit que le HTML fonctionnel reste
-     ATTEIGNABLE, et la presentation a le droit de le relocaliser. Les cloner
-     doublerait chaque href et le test de conservation le verrait. */
+  /* Les liens natifs que la maquette ne montre pas. DEPLACES, jamais clones :
+     la premisse 3 du systeme dit que le HTML fonctionnel reste ATTEIGNABLE, et
+     la presentation a le droit de le relocaliser. Les cloner doublerait chaque
+     href et le test de conservation le verrait.
+
+     ON N'ENUMERE PAS. La premiere version listait six href en dur — front,
+     newcomments, ask, show, jobs, submit. Une session OUVERTE en sert
+     davantage (welcome, threads), et tout ce qui n'etait pas dans la liste
+     restait dans la cellule centrale, colle au champ de recherche et prive de
+     ses separateurs « | » : « welcomethreads » a l'ecran. Les fixtures sont
+     deconnectees, donc aucun test du depot ne pouvait le voir.
+     On prend donc TOUT ce qui reste, et la liste des exceptions est courte et
+     explicite plutot que la liste des inclusions. */
   const groupe2 = document.createElement('div');
   groupe2.className = '__nav-2';
-  for (const href of ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']) {
-    const a = barre.querySelector(`.pagetop a[href="${href}"]`);
+  for (const a of [...barre.querySelectorAll('.pagetop a')]) {
+    /* Le titre du site : entete() le relocalise en titre de page. */
+    if (a.closest('.hnname')) continue;
+    /* La cellule de droite : pseudo, karma et logout ont leur propre bloc. */
+    if (compte && compte.contains(a)) continue;
+    /* Explore pointe deja vers newest. Le lien natif est range hors de la vue
+       plutot que supprime : le supprimer perdrait un href. */
+    if (a.getAttribute('href') === 'newest') addClass(a, '__range');
     /* detache AVANT insere : ces liens existent deja dans .pagetop, ce n'est
        pas un noeud neuf. Voir le commentaire sur le logo ci-dessus. */
-    if (a) { detache(a); insere(groupe2, a, null); }
+    detache(a);
+    insere(groupe2, a, null);
   }
   side.appendChild(groupe2);
 
-  /* Explore pointe vers newest, dont le lien natif vit dans .pagetop. Il est
-     deplace hors ecran plutot que supprime : le supprimer perdrait un href. */
-  const natifNewest = barre.querySelector('.pagetop a[href="newest"]');
-  if (natifNewest) {
-    addClass(natifNewest, '__range');
-    detache(natifNewest);
-    insere(groupe2, natifNewest, null);
+  /* Le bloc de compte, en pied de sidebar. HN sert trois choses dans la
+     cellule de droite — le pseudo, le karma, et logout — et la maquette n'y
+     met qu'une pastille. Les trois descendent ici : rien n'est cache derriere
+     un survol, rien n'est tronque, et l'en-tete cesse de deborder.
+     Le karma est une DONNEE REELLE : il est relu et re-affiche, pas jete. */
+  if (compte && compte.querySelector('#me')) {
+    const bloc = document.createElement('div');
+    bloc.className = '__compte';
+
+    const me = compte.querySelector('#me');
+    detache(me);
+    insere(bloc, me, null);
+
+    /* Les noeuds texte restants portent « (karma) » et le separateur « | ».
+       On les retire du DOM — reversible — et on rend le nombre dans un noeud
+       NEUF, pour ne pas avoir a reecrire le texte d'un noeud de HN. */
+    const restes = [...compte.childNodes].filter(n => n.nodeType === 3);
+    const karma = (restes.map(n => n.textContent).join(' ').match(/\((\d+)\)/) || [])[1];
+    restes.forEach(detache);
+    if (karma) {
+      const k = document.createElement('span');
+      k.className = '__karma';
+      k.textContent = `${karma} karma`;
+      bloc.appendChild(k);
+    }
+
+    const deco = compte.querySelector('a[href^="logout"]');
+    if (deco) { detache(deco); insere(bloc, deco, null); }
+
+    side.appendChild(bloc);
   }
 
   /* T22 — l'interrupteur, en pied de sidebar. Il affiche l'ETAT courant et
@@ -1037,9 +1107,19 @@ function entete() {
   if (document.querySelector('#hnmain table.fatitem')) {
     const secondaire = document.createElement('div');
     secondaire.className = '__item-nav';
-    for (const href of ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']) {
-      const a = barre.querySelector(`.pagetop a[href="${href}"]`);
-      if (a) { detache(a); insere(secondaire, a, null); }
+    /* Meme regle que sidebar() : on ne liste pas les href, on prend tout ce
+       qui reste. Une session ouverte sert welcome et threads en plus, et une
+       liste en dur les laissait colles au champ de recherche. */
+    const pagetops = [...barre.querySelectorAll('.pagetop')];
+    const compte = pagetops[pagetops.length - 1];
+    for (const a of [...barre.querySelectorAll('.pagetop a')]) {
+      if (a.closest('.hnname')) continue;
+      /* Sur /item il n'y a pas de sidebar ou loger le bloc de compte : le
+         pseudo et logout rejoignent donc la rangee sous le titre, avec le
+         reste. La pastille garde le coin en haut a droite. */
+      if (compte && compte.contains(a) && !utilisateur()) continue;
+      detache(a);
+      insere(secondaire, a, null);
     }
     insere(gauche, secondaire, null);
     barre.querySelectorAll('.pagetop').forEach(p => {

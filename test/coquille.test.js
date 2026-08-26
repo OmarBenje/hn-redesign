@@ -19,11 +19,32 @@ const NEWS = 'https://news.ycombinator.com/news';
 const temoinBrut = (fichier, transforme = h => h) =>
   parseHTML(transforme(readFileSync(new URL('../design-refs/fixtures/' + fichier, import.meta.url), 'utf8'))).document;
 
-/* Rend la fixture « connectee » : HN sert <a id="me"> dans la cellule de
-   droite quand la session est ouverte, a la place du lien login. */
-export const connecte = (pseudo = 'omarbenje') => html =>
-  html.replace(/<a href="login\?goto=news">login<\/a>/,
-    `<a id="me" href="user?id=${pseudo}">${pseudo}</a> (<a href="logout">logout</a>)`);
+/* Rend la fixture « connectee ».
+ *
+ * CE HELPER ETAIT UNE APPROXIMATION, ET C'EST CE QUI A LAISSE PASSER UN BUG
+ * VISIBLE A L'ECRAN. Il posait un #me et un logout, sans karma et sans les
+ * liens que HN n'ajoute qu'a une session ouverte. Or une session ouverte
+ * change la navbar sur trois points, et les trois comptent :
+ *
+ *   1. la cellule centrale gagne « welcome » et « threads » ;
+ *   2. la cellule de droite porte le karma entre parentheses ;
+ *   3. logout remplace login, avec un jeton dans son href.
+ *
+ * La premiere version de sidebar() relocalisait six href ENUMERES. welcome et
+ * threads n'y etaient pas, donc ils restaient dans la cellule centrale — et
+ * comme les separateurs « | » sont retires, ils s'affichaient colles :
+ * « welcomethreads », a cote du champ de recherche. Aucun test ne pouvait le
+ * voir, parce que ce helper-ci ne les servait pas.
+ *
+ * Regle a retenir : une fixture qui simplifie la realite ne teste que la
+ * simplification. */
+export const connecte = (pseudo = 'omarbenje', karma = 137) => html => html
+  .replace(/<a href="login\?goto=news">login<\/a>/,
+    `<a id="me" href="user?id=${pseudo}">${pseudo}</a> (${karma}) | ` +
+    `<a id="logout" href="logout?auth=0f2e&amp;goto=news">logout</a>`)
+  .replace('<a href="newest">new</a>',
+    `<a href="newest">new</a> | <a href="welcome">welcome</a> | ` +
+    `<a href="threads?id=${pseudo}">threads</a>`);
 
 test('le harnais applique la transformation de fixture avant analyse', () => {
   const { document } = charge('news.html', NEWS, connecte('omarbenje'));
@@ -269,12 +290,18 @@ test('revert rend #hnmain identique a l octet sur /news', () => {
    /item, mais entete() si — les six liens natifs restaient coinces dans
    .pagetop, dans la meme cellule que la pastille de recherche a 100% de
    largeur. Ils sont desormais releves sous le titre, cellule de gauche. */
-test('sur /item, les six liens natifs sont releves sous le titre', () => {
+test('sur /item, tous les liens natifs sont releves sous le titre', () => {
+  /* SEPT et non six : « newest » en fait partie ici. Sur /news il est range
+     hors de la vue parce qu'Explore le represente deja dans la sidebar ; sur
+     /item il n'y a pas de sidebar, donc pas d'Explore, et le cacher perdrait
+     une destination. La liste n'est plus enumeree dans le code — on prend tout
+     ce qui reste dans .pagetop — donc ce test vaut aussi pour welcome et
+     threads, que HN ne sert qu'a une session ouverte. */
   const { document } = charge();
   const secondaire = document.querySelector('.__entete .__item-nav');
   assert.ok(secondaire, 'la rangee secondaire existe dans l en-tete');
   const liens = [...secondaire.querySelectorAll('a')].map(a => a.getAttribute('href'));
-  assert.deepEqual(liens, ['front', 'newcomments', 'ask', 'show', 'jobs', 'submit']);
+  assert.deepEqual(liens, ['newest', 'front', 'newcomments', 'ask', 'show', 'jobs', 'submit']);
   for (const href of liens)
     assert.equal(document.querySelectorAll(`a[href="${href}"]`).length, 1,
       `${href} existe une seule fois — deplace, pas clone`);
@@ -308,4 +335,68 @@ test('revert restaure #hnmain a l octet sur /item — les six liens y reviennent
   const { api, document } = charge();
   api.revert();
   assert.equal(document.querySelector('#hnmain').innerHTML, temoin.querySelector('#hnmain').innerHTML);
+});
+
+
+/* ---------------------------------------------------------------------------
+   La session ouverte. Ces tests existent parce que trois defauts visibles a
+   l'ecran ont survecu a 45 tests et 76 assertions de rendu : les fixtures du
+   depot sont DECONNECTEES, et la navbar d'une session ouverte n'a pas la meme
+   forme. Voir le commentaire sur connecte() en tete de fichier.
+   --------------------------------------------------------------------------- */
+
+test('connecte : aucun lien natif ne reste dans l en-tete', () => {
+  /* LE test de non-regression de « welcomethreads ». Il echouerait avec la
+     liste d'href enumeree, puisque welcome et threads n'y figuraient pas. */
+  const { document } = charge('news.html', NEWS, connecte('omarbnjl'));
+  const restes = [...document.querySelectorAll('.__entete .pagetop a')]
+    .filter(a => !a.closest('.hnname'))
+    .map(a => a.getAttribute('href'));
+  assert.deepEqual(restes, [], 'la navbar native est entierement relocalisee');
+});
+
+test('connecte : welcome et threads atterrissent dans la sidebar', () => {
+  const { document } = charge('news.html', NEWS, connecte('omarbnjl'));
+  const hrefs = [...document.querySelectorAll('.__nav-2 a')].map(a => a.getAttribute('href'));
+  assert.ok(hrefs.includes('welcome'), 'welcome est relocalise');
+  assert.ok(hrefs.includes('threads?id=omarbnjl'), 'threads est relocalise');
+});
+
+test('connecte : le bloc de compte porte pseudo, karma et logout', () => {
+  const { document } = charge('news.html', NEWS, connecte('omarbnjl', 137));
+  const bloc = document.querySelector('.__side .__compte');
+  assert.ok(bloc, 'le bloc de compte existe en pied de sidebar');
+  assert.equal(bloc.querySelector('#me').textContent, 'omarbnjl');
+  assert.equal(bloc.querySelector('.__karma').textContent, '137 karma',
+    'le karma est une donnee reelle : relu et re-affiche, jamais jete');
+  assert.ok(bloc.querySelector('a[href^="logout"]'), 'logout descend ici aussi');
+});
+
+test('connecte : la cellule de droite ne garde que la pastille', () => {
+  /* Ce qui debordait de l'ecran : la pastille cotoyait « omarbnjl (1 » et
+     « logout », tronques au bord de la fenetre. */
+  const { document } = charge('news.html', NEWS, connecte('omarbnjl'));
+  const cellules = [...document.querySelectorAll('.__entete td')];
+  const droite = cellules[cellules.length - 1];
+  assert.ok(droite.querySelector('.__moi'), 'la pastille est la');
+  assert.equal(droite.querySelector('#me'), null, 'le pseudo natif est parti');
+  assert.equal(droite.querySelector('a[href^="logout"]'), null, 'logout est parti');
+  assert.equal(droite.textContent.replace(/\s/g, ''), 'O',
+    'il ne reste que l initiale — aucun texte residuel');
+});
+
+test('connecte : aucun href natif ne disparait', () => {
+  const avant = new Set();
+  for (const a of temoinBrut('news.html', connecte('omarbnjl')).querySelectorAll('.pagetop a'))
+    avant.add(a.getAttribute('href'));
+  const { document } = charge('news.html', NEWS, connecte('omarbnjl'));
+  const apres = new Set([...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href')));
+  assert.deepEqual([...avant].filter(h => !apres.has(h)), []);
+});
+
+test('connecte : revert restaure #hnmain a l octet', () => {
+  const { api, document } = charge('news.html', NEWS, connecte('omarbnjl'));
+  api.revert();
+  assert.equal(document.querySelector('#hnmain').innerHTML,
+    temoinBrut('news.html', connecte('omarbnjl')).querySelector('#hnmain').innerHTML);
 });

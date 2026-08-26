@@ -82,6 +82,22 @@ const jamaisRedefinis = clair.filter(t => !media.includes(t));
 ok(jamaisRedefinis.every(t => ['--ui', '--mono', '--radius-sm', '--radius-md', '--radius-full', '--accent'].includes(t)),
    `seuls les tokens sans variante de theme ne sont pas redefinis (${jamaisRedefinis.join(' ')})`);
 
+/* 3 bis. le champ de recherche bat la regle generique de champ texte.
+   Meme piege que a:visited, autre endroit : deux regles a specificite EGALE,
+   celle qui vient plus bas gagne. La generique de T19 vit apres la notre dans
+   la feuille, donc a egalite le champ de recherche portait sa bordure de 1px
+   par-dessus la pilule. On prouve ici que le classement tient par SPECIFICITE
+   et non par position, seule facon qu'un reagencement du fichier ne le casse
+   pas en silence. */
+const rech = regles.find(r => /\.__rech input/.test(r.sel));
+const champGenerique = regles.find(r => /#hnmain input\[type="text"\]$/.test(r.sel.trim()));
+ok(!!rech, 'la regle du champ de recherche existe');
+if (rech && champGenerique) {
+  const sr = Math.max(...rech.sel.split(',').map(spec));
+  const sg = Math.max(...champGenerique.sel.split(',').map(spec));
+  ok(sr > sg, `le champ de recherche (${sr}) bat la regle generique (${sg}) — pas de double pilule`);
+}
+
 /* 4. budget de coherence — T25, revise avec la coquille app */
 const radius = new Set([...css.matchAll(/border-radius:\s*([^;]+);/g)].map(x => x[1].trim()));
 ok(radius.size <= 3, `<= 3 valeurs de border-radius (${[...radius].join(', ') || 'aucune'})`);
