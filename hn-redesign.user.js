@@ -461,8 +461,17 @@ const CSS = `
 
 /* La pastille de rang. Un aplat de 26px a droit a l'orange pur : la regle qui
    l'interdit porte sur le TEXTE, pas sur les surfaces. */
+/* margin: 0 auto centre la pastille dans la gouttiere de 40px. Sans ca elle
+   est plaquee a DROITE : HN sert <td class="title" align="right">, un
+   attribut de PRESENTATION, et il aligne le contenu de la cellule. Mesure :
+   pastille centree sur 411,3 quand la fleche de vote juste dessous l est sur
+   404,3 — 7px d ecart, visibles des qu on regarde la colonne de gauche.
+   Le CSS bat l attribut, mais encore faut-il ecrire la regle : text-align ne
+   suffit pas ici, la pastille est un bloc flex et c est sa marge qui la
+   deplace. */
 .${ROOT} #hnmain tr.__card .rank {
   display: flex; align-items: center; justify-content: center;
+  margin: 0 auto;
   width: 26px; height: 26px; border-radius: var(--radius-full);
   background: var(--accent); color: var(--surface-1);
   font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;

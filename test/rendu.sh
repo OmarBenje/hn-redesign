@@ -111,6 +111,28 @@ verdict "$(js '(()=>{
   });})()')" || ECHECS=1
 
 echo
+echo "/news — la pastille de rang et la fleche partagent un axe"
+# Une boite comparee a une autre, jamais a une constante. HN sert
+# <td class="title" align="right"> : un attribut de PRESENTATION, qui plaquait
+# la pastille a droite de la gouttiere pendant que la fleche, elle, restait
+# centree. 7px d ecart sur les 30 lignes — invisibles a toute assertion qui
+# mesure chaque element separement.
+verdict "$(js '(()=>{
+  const cartes=[...document.querySelectorAll("#hnmain tr.__card")];
+  const ecarts=cartes.map(c=>{
+    const p=c.querySelector(".rank"), a=c.querySelector("div.votearrow");
+    if(!p||!a) return -1;
+    const pb=p.getBoundingClientRect(), ab=a.getBoundingClientRect();
+    return Math.abs((pb.left+pb.right)/2-(ab.left+ab.right)/2);
+  }).filter(v=>v>=0);
+  const hors=ecarts.filter(v=>v>1).length;
+  const max=ecarts.reduce((m,v)=>v>m?v:m,0);
+  return JSON.stringify({
+    "rang et fleche sur le meme axe vertical":[hors===0&&ecarts.length>25,
+      ecarts.length+" lignes avec fleche, "+hors+" desaxees, ecart max "+max.toFixed(1)+"px"]
+  });})()')" || ECHECS=1
+
+echo
 echo "/news — la densite"
 # Cible : 6 cartes entieres, pas 7. Ruling du controleur (fix round 1/5) :
 # le chiffre de 7 dans le brief de cette tache venait d un calcul fait en
